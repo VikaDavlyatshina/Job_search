@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict
-
+import time
 import requests
 
 
@@ -27,32 +27,35 @@ class HeadHunterAPI(BaseVacancyApi):
 
     def _connect(self) -> None:
         """
-        Проверяем доступность API
-        1) Пробуем создать сесию
-        2) Пробуем сделать тестовый запрос
-        3) Используем сесию
+        Проверяет доступность API.
+        Создает сессию только если API доступно.
         """
 
-        try:
-            # Создаём сессию, если она не создана
-            if self.__session is None:
-                self.__session = requests.Session()
+        # Если сессия уже есть - считаем что соединение установлено
+        if self.__session is not None:
+            return
 
-            # Пробуем сделать тестовый запрос
-            test_params = {'text': 'test', 'per_page': 1}
+        try:
+            # Создаем сессию один раз
+            self.__session = requests.Session()
+
+            # Проверяем доступность API используя созданную сессию
             test_response = self.__session.get(
                 self.__base_url,
-                params=test_params,
+                params={'text': 'test', 'per_page': 1, 'area': 113},
                 timeout=10
             )
+            test_response.raise_for_status()
 
-            # Проверяем статус ответа
-            test_response.raise_for_status()    # Если ответ не 200 - будет ошибка
+            # Дополнительно проверяем формат ответа
+            data = test_response.json()
+            if 'items' not in data:
+                raise ConnectionError("API вернуло неверный формат данных")
 
         except requests.RequestException as e:
-            # Если что-то пошло не так - сбрасываем сесию и выводим сообщение
+            # Если ошибка - сбрасываем сессию
             self.__session = None
-            raise ConnectionError(f"API hh.ru недоступно: {e}")
+            raise ConnectionError(f"Не удалось подключиться к API hh.ru: {e}")
 
 
 
@@ -69,36 +72,64 @@ class HeadHunterAPI(BaseVacancyApi):
         :return: Получаем список словарей с данными вакансий
         """
 
-        # Проверяем соединение
-        if self.__session is None:
-            self.__session = requests.Session()  # Если нет сесии - создаём
+        # 1. Проверка входных данных
+        if not keyword or not isinstance(keyword, str):
+            raise ValueError("Ключевое слово должно быть непустой строкой")
 
-        all_vacancies = []     # Собираем вакансии со всех сраниц
+        keyword = keyword.strip()
+        if not keyword:
+            raise ValueError("Ключевое слово не может состоять только из пробелов")
+
+        if max_pages <= 0:
+            raise ValueError("Количество страниц должно быть положительным числом")
+
+        # 2. Проверяем соединение
+        if self.__session is None:
+            self._connect()
+
+        all_vacancies = []     # Собираем вакансии со всех страниц
 
         # Загружаем данные постранично
         for page in range(max_pages):
-            # Параметры запроса для текущей страницы
-            params = {
-                "area": 113,  # Код России
-                "text": keyword,  # Ключевое слово
-                "page": page,  # Номер страницы
-                "per_page": 100  # Количество вакансий на странице
-            }
+            try:
+                params = {
+                    "text": keyword,
+                    "area": 113,  # Россия
+                    "page": page,  # Номер страницы (0-based)
+                    "per_page": 100,  # Максимум на странице
+                    "only_with_salary": False,  # Берем и без зарплаты
+                }
 
-            # Делаем запрос для текущей страницы
-            response = self.__session.get(self.__base_url, params=params)
-            response.raise_for_status()  # Проверяем успешность
+                # Делаем запрос
+                response = self.__session.get(
+                    self.__base_url,
+                    params=params,
+                    timeout=15
+                )
+                response.raise_for_status()
 
-            # Проверяем вакансии текущей страницы
-            page_vacancies = response.json()["items"]
+                data = response.json()
+                page_vacancies = data.get("items", [])
+                all_vacancies.extend(page_vacancies)
 
-            # Добавляем вакансии в общий список
-            all_vacancies.extend(page_vacancies)
+                # Проверка на последнюю страницу
 
-            # Проверяем, есть ли ещё страницы
-            # Если на странице меньше 100 вакансий - значит это последняя страница
-            if len(page_vacancies) < 100:
-                break
+                # 1. По количеству вакансий на странице
+                if len(page_vacancies) < 100:
+                    break
+
+                # 2. По общему количеству страниц в ответе
+                pages_found = data.get("pages", 0)
+                if page >= pages_found - 1:
+                    break
+
+                # Добавляем паузы между запросами
+                if page < max_pages - 1:
+                    time.sleep(0.1)
+
+            except requests.RequestException as e:
+                print(f"Ошибка при загрузке страницы {page + 1}: {e}")
+                continue
 
         return all_vacancies
 

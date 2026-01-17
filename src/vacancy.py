@@ -1,8 +1,13 @@
+from typing import Dict, Any, List
+
 
 class Vacancy:
     """Класс для представления Вакансии"""
+
+     # Список разрешенных атрибутов (для экономии памяти)
     __slots__ = ("name", "area", "salary_from", "salary_to", "requirement", "responsibility", "schedule", "url")
 
+    # Инициализация
     def __init__(
             self,
             name: str,
@@ -14,40 +19,224 @@ class Vacancy:
             schedule: str| None,
             url: str
     ):
-        self.name = name                        # Название вакансии
-        self.area = area                        # Город
-        self.salary_from = salary_from          # Зарплата от
-        self.salary_to = salary_to              # Зарплата до
-        self.requirement = requirement          # Требования
-        self.responsibility = responsibility    # Обязанности
-        self.schedule = schedule                # График работы
-        self.url = url                          # Ссылка на вакансию
+        self.name = self.__validate_name(name)                 # Название вакансии
+        self.area = area or "Не указано"                      # Город
 
+        # Используем валидацию для зарплаты
+        self.salary_from = self.__validate_salary(salary_from)   # Зарплата от
+        self.salary_to = self.__validate_salary(salary_to)       # Зарплата до
+
+        self.requirement = requirement or "Не указано"          # Требования
+        self.responsibility = responsibility or "Не указано"    # Обязанности
+        self.schedule = schedule or "Не указано"                # График работы
+        self.url = self.__validate_url(url)                     # Ссылка на вакансию
+
+    # Валидация данных
+
+    @staticmethod
+    def __validate_name(name: str) -> str:
+        """
+        Валидации названия вакансии.
+
+        :param name:  Название вакансии
+        :return:
+               Возвращает корректные названия вакансии.
+        :raises:
+              ValueError: Если название пустое
+        """
+
+        if not name:
+            raise ValueError("У вакансии нет названия!")
+        return name
+
+    @staticmethod
+    def __validate_salary(salary: int|float|None) -> int|None:
+        """
+        Валидация зарплаты.
+
+        :param salary: Значение зарплаты (может быть None)
+        :return: int: Если зарплата указана
+                 None: Если зарплата не указана
+
+        :raises: ValueError: Если зарплата не является числом
+        """
+
+        if salary is None:
+            return None
+
+        if not isinstance(salary, (int, float)):
+            raise ValueError("Зарплата должна быть числом")
+
+        return int(salary)
+
+    @staticmethod
+    def __validate_url(url: str|None) -> str:
+        """
+        Валидация ссылки на вакансию.
+        :param url:
+                Ссылка вакансии - строка или не указано
+        :return:
+               Возвращает корректную ссылки вакансий
+        :raises:
+               ValueError: Если ссылка отсутствует или некорректна
+        """
+
+        if not url or not isinstance(url, str):
+            raise ValueError("Нет ссылки на вакансию!")
+        if not url.startswith("https://"):
+            raise ValueError(f"Некорректная ссылка: {url}")
+        return url
+
+
+    # Методы сравнения
     def __lt__(self, other: "Vacancy") -> bool:
-        """Сравнение вакансий по зарплате """
-        return (self.salary_from or 0) < (other.salary_from or 0)
+        """
+        Сравнение вакансий для сортировки (меньше чем).
+
+        :param:
+            other: Другая вакансия для сравнения
+
+        :return:
+            bool: True если текущая вакансия имеет меньшую зарплату
+        """
+
+        if not isinstance(other, Vacancy):
+            return NotImplemented
+
+        # Если зарплата не указана - считаем как 0
+        self_salary = self.salary_from if self.salary_from is not None else 0
+        other_salary = other.salary_from if other.salary_from is not None else 0
+
+        return self_salary < other_salary
+
+
+
+    def __gt__(self, other: "Vacancy") -> bool:
+        """
+        Сравнение вакансий для сортировки (больше чем).
+
+        :param:
+            other: Другая вакансия для сравнения
+
+        :return:
+            bool: True если текущая вакансия имеет большую зарплату
+        """
+
+        if not isinstance(other, Vacancy):
+            return NotImplemented
+
+        # Если зарплата не указана - считаем как 0
+        self_salary = self.salary_from if self.salary_from is not None else 0
+        other_salary = other.salary_from if other.salary_from is not None else 0
+
+        return self_salary > other_salary
 
 
     def __eq__(self, other: "Vacancy") -> bool:
+        """
+        Проверка равенства вакансий по зарплате.
+
+        :param:
+            other: Другая вакансия для сравнения
+
+        :return:
+            bool: True если зарплаты равны
+        """
         if not isinstance(other, Vacancy):
             return NotImplemented
-        return self.salary_from == other.salary_from
+
+        # Если зарплата не указана - считаем как 0
+        self_salary = self.salary_from if self.salary_from is not None else 0
+        other_salary = other.salary_from if other.salary_from is not None else 0
+
+        return self_salary == other_salary
+
+    def __str__(self) -> str:
+        """Для строкового представления вакансий"""
+
+        # Определяем формат зарплаты
+        if self.salary_from is None and self.salary_to is None:
+            salary_info = "Не указана"
+
+        elif self.salary_from == self.salary_to and self.salary_from is not None:
+            # Если зарплата "от" и "до" одинаковые, показываем как фиксированную
+            salary_info = f"{self.salary_from:,} руб.".replace(",", " ")
+
+        elif self.salary_from is not None and self.salary_to is not None:
+            salary_info = f"{self.salary_from:,} - {self.salary_to:,} руб.".replace(",", " ")
+
+        elif self.salary_from is not None:
+            salary_info = f"от {self.salary_from:,} руб.".replace(",", " ")
+
+        else:  # только salary_to указано
+            salary_info = f"до {self.salary_to:,} руб.".replace(",", " ")
+
+        return f"Вакансия: {self.name}\nГород: {self.area}\nЗарплата: {salary_info}"
+
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Преобразует объект Vacancy в словарь для сохранения в Json
+
+        :return: Словарь с данными вакансии
+        """
+
+        return {
+             "name": self.name,
+             "area": self.area,
+             "salary_from": self.salary_from,
+             "salary_to": self.salary_to,
+             "requirement": self.requirement,
+             "responsibility": self.responsibility,
+             "schedule": self.schedule,
+             "url": self.url
+         }
 
 
     @classmethod
     def from_vacancy_hh(cls, hh_data: dict) -> "Vacancy":
-        salary = hh_data.get("salary") or {}
+        """
+        Создает экземпляр класса Vacancy из данных ответа API
+        :param hh_data: Словарь с данными вакансий от hh.ru
+        :return: Возвращает объект класса Vacancy
+        """
 
+        # Создаем один объект класса Vacancy
         return cls(
             name=hh_data.get("name"),
             area=hh_data.get("area", {}).get("name"),
-            salary_from=salary.get("from"),
-            salary_to=salary.get("to"),
+            salary_from = hh_data.get("salary", {}).get("from"),
+            salary_to = hh_data.get("salary", {}).get("to"),
             requirement=hh_data.get("snippet", {}).get("requirement"),
             responsibility=hh_data.get("snippet", {}).get("responsibility"),
             schedule=hh_data.get("schedule", {}).get("name"),
             url=hh_data.get("alternate_url"),
-
         )
+
+    @classmethod
+    def cast_to_object_list(cls, hh_data_list: List[Dict]) -> List[Vacancy]:
+        """
+        Создаем список объектов Vacancy из списка словарей
+        :param hh_data_list: Список словарей с данными вакансий от hh.ru
+        :return: Возвращает список объектов класса Vacancy
+        """
+
+        # Создаём список объектов
+        vacancies = []
+
+        # Проходим циклом по всем вакансия
+        for item in hh_data_list:
+            try:
+                # Создаём объект вакансии
+                vacancy = cls.from_vacancy_hh(item)
+                # Добавляем созданную вакансию к списку вакансий
+                vacancies.append(vacancy)
+
+            # Если вакансия битая - пропускаем
+            except ValueError as e:
+                print(f"Пропущена вакансия: {e}")
+                continue
+
+        return vacancies
 
 

@@ -73,5 +73,3 @@ ignore_missing_imports = true
 exclude = '''
 ^(\.venv|venv|env)/
 '''
-
-
