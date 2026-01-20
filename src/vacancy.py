@@ -1,6 +1,7 @@
 from typing import Dict, Any, List
 
 
+
 class Vacancy:
     """Класс для представления Вакансии"""
 
@@ -55,19 +56,28 @@ class Vacancy:
         Валидация зарплаты.
 
         :param salary: Значение зарплаты (может быть None)
-        :return: int: Если зарплата указана
-                 None: Если зарплата не указана
-
-        :raises: ValueError: Если зарплата не является числом
+        :return: Валидное значение или None
         """
 
+        # 1. Если None -> None
         if salary is None:
             return None
 
+        # 2. Проверяем тип данных. Если не число -> None
         if not isinstance(salary, (int, float)):
-            raise ValueError("Зарплата должна быть числом")
+            return None
 
-        return int(salary)
+        # 3. Пробуем преобразовать к int
+        try:
+            salary_int = int(salary)
+        except (ValueError, OverflowError):
+            return None
+
+        # 4. Проверяем диапазон
+        if salary_int < 0:   # Отрицательная зарплата
+            return None
+
+        return salary_int
 
     @staticmethod
     def __validate_url(url: str|None) -> str:
@@ -88,10 +98,33 @@ class Vacancy:
         return url
 
 
+    def get_estimated_salary(self) -> int| None:
+        """
+        Возращает предполагаемую зарплату
+        1. Если обе границы None → None
+        2. Если только from → from
+        3. Если только to → to
+        4. Если обе → среднее арифметическое
+        """
+
+        if  self.salary_from is None and self.salary_to is None:
+            return None
+
+        elif self.salary_from is None:
+            return self.salary_to
+
+        elif self.salary_to is None:
+           return self.salary_from
+
+        else:
+           return (self.salary_from + self.salary_to) // 2
+
+
     # Методы сравнения
     def __lt__(self, other: "Vacancy") -> bool:
         """
-        Сравнение вакансий для сортировки (меньше чем).
+        Сравнение вакансий (меньше чем) по предполагаемой зарплате.
+        Если зарплата не указана -> считаем как 0
 
         :param:
             other: Другая вакансия для сравнения
@@ -104,8 +137,8 @@ class Vacancy:
             return NotImplemented
 
         # Если зарплата не указана - считаем как 0
-        self_salary = self.salary_from if self.salary_from is not None else 0
-        other_salary = other.salary_from if other.salary_from is not None else 0
+        self_salary = self.get_estimated_salary() or 0
+        other_salary = other.get_estimated_salary() or 0
 
         return self_salary < other_salary
 
@@ -113,7 +146,7 @@ class Vacancy:
 
     def __gt__(self, other: "Vacancy") -> bool:
         """
-        Сравнение вакансий для сортировки (больше чем).
+        Сравнение вакансий (больше чем) по предполагаемой зарплате.
 
         :param:
             other: Другая вакансия для сравнения
@@ -126,15 +159,15 @@ class Vacancy:
             return NotImplemented
 
         # Если зарплата не указана - считаем как 0
-        self_salary = self.salary_from if self.salary_from is not None else 0
-        other_salary = other.salary_from if other.salary_from is not None else 0
+        self_salary = self.get_estimated_salary() or 0
+        other_salary = other.get_estimated_salary() or 0
 
         return self_salary > other_salary
 
 
     def __eq__(self, other: "Vacancy") -> bool:
         """
-        Проверка равенства вакансий по зарплате.
+        Проверка равенства вакансий по предполагаемой зарплате.
 
         :param:
             other: Другая вакансия для сравнения
@@ -145,9 +178,14 @@ class Vacancy:
         if not isinstance(other, Vacancy):
             return NotImplemented
 
-        # Если зарплата не указана - считаем как 0
-        self_salary = self.salary_from if self.salary_from is not None else 0
-        other_salary = other.salary_from if other.salary_from is not None else 0
+
+        self_salary = self.get_estimated_salary()
+        other_salary = other.get_estimated_salary()
+
+        if self_salary is None and other_salary is None:
+            return True  # Обе без зарплаты
+        if self_salary is None or other_salary is None:
+            return False  # Одна с зарплатой, другая без
 
         return self_salary == other_salary
 
@@ -176,7 +214,7 @@ class Vacancy:
 
     def to_dict(self) -> Dict[str, Any]:
         """
-        Преобразует объект Vacancy в словарь для сохранения в Json
+        Преобразует объект Vacancy в словарь для сохранения в JSON
 
         :return: Словарь с данными вакансии
         """
@@ -201,12 +239,20 @@ class Vacancy:
         :return: Возвращает объект класса Vacancy
         """
 
+        # Безопасное получение данных о зарплате
+        salary_data = hh_data.get("salary")
+        if salary_data:
+            salary_from = salary_data.get("from")
+            salary_to = salary_data.get("to")
+        else:
+            salary_from = salary_to = None
+
         # Создаем один объект класса Vacancy
         return cls(
             name=hh_data.get("name"),
             area=hh_data.get("area", {}).get("name"),
-            salary_from = hh_data.get("salary", {}).get("from"),
-            salary_to = hh_data.get("salary", {}).get("to"),
+            salary_from = salary_from,  # Может быть None
+            salary_to = salary_to,      # Может быть None
             requirement=hh_data.get("snippet", {}).get("requirement"),
             responsibility=hh_data.get("snippet", {}).get("responsibility"),
             schedule=hh_data.get("schedule", {}).get("name"),
@@ -238,5 +284,4 @@ class Vacancy:
                 continue
 
         return vacancies
-
 
