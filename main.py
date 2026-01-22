@@ -1,9 +1,84 @@
-from src.vacancy import Vacancy
 from src.api import HeadHunterAPI
-from src.storage import JSONSaver
 from src.utils import *
 
 
+# Вспомогательные функции
+def show_saved_vacancies(saver: JSONSaver):
+    """Показывает сохранённые вакансии"""
+    saved = saver.get_vacancies()
+
+    if not saved:
+        print("📭 В файле нет сохранённых вакансий")
+        return
+
+    print(f"\n📁 СОХРАНЕНО ВАКАНСИЙ: {len(saved)}")
+
+    # Показываем с номерами для выбора
+    for i, vacancy in enumerate(saved[:20], 1):  # Первые 20
+        print(f"\n{'─' * 40}")
+        print(f"№{i}. {vacancy.name}")
+        print(f"   Город: {vacancy.area}")
+        print(f"   Зарплата: ", end="")
+        if vacancy.salary_from or vacancy.salary_to:
+            if vacancy.salary_from:
+                print(f"от {vacancy.salary_from}", end=" ")
+            if vacancy.salary_to:
+                print(f"до {vacancy.salary_to}", end=" ")
+            print("руб.")
+        else:
+            print("Не указана")
+        print(f"   Ссылка: {vacancy.url}")
+
+    if len(saved) > 20:
+        print(f"\n... и ещё {len(saved) - 20} вакансий")
+
+    input("\nНажмите Enter чтобы продолжить...")
+
+
+def delete_vacancy_menu(saver: JSONSaver):
+    """Меню удаления вакансии"""
+    print("\n🗑️  УДАЛЕНИЕ ВАКАНСИИ")
+    print("1. Удалить по URL")
+    print("2. Выбрать из списка")
+    print("3. Назад")
+
+    choice = input("👉 Ваш выбор (1-3): ").strip()
+
+    if choice == "1":
+        url = input("Введите URL вакансии: ").strip()
+        if saver.delete_vacancy_by_url(url):  # ← НУЖНО ДОБАВИТЬ ЭТОТ МЕТОД!
+            print("✅ Вакансия удалена")
+        else:
+            print("❌ Вакансия не найдена")
+
+    elif choice == "2":
+        # Показываем список для выбора
+        saved = saver.get_vacancies()
+        if saved:
+            show_saved_vacancies(saver)  # Показываем список
+            try:
+                num = int(input("\nВведите номер вакансии для удаления: "))
+                if 1 <= num <= len(saved):
+                    # Получаем вакансию по номеру
+                    vacancy_to_delete = saved[num - 1]
+                    # Нужен метод delete_vacancy_by_url
+                    if saver.delete_vacancy_by_url(vacancy_to_delete.url):
+                        print(f"✅ Вакансия №{num} удалена")
+                    else:
+                        print("❌ Ошибка при удалении")
+                else:
+                    print("❌ Неверный номер")
+            except ValueError:
+                print("❌ Введите число")
+
+def clear_file_menu(saver: JSONSaver):
+    """Меню очистки файла"""
+    confirm = input("⚠️  ВЫ УВЕРЕНЫ? Все вакансии будут удалены! (да/нет): ").strip().lower()
+    if confirm in ['да', 'д', 'yes', 'y']:
+        saver.clear_all()
+        print("✅ Файл очищен")
+    else:
+        print("❌ Отменено")
 
 
 
@@ -46,17 +121,38 @@ def user_interaction() -> None:
 
             if not search_query:
                 print("❌ Поисковый запрос не может быть пустым!")
-                return
+                continue   # Продолжаем цикл
+
+            print("\n🏙️  ВЫБОР ГОРОДА")
+            city = input("Введите город (или Enter для поиска по России): ").strip()
+
+            while True:
+                pages_input = input("Сколько страниц искать? (1 стр = 100 вакансий, Enter для 2): ").strip()
+                if not pages_input:
+                    max_pages = 2
+                    break
+                elif pages_input.isdigit():
+                    max_pages = int(pages_input)
+                    if 1 <= max_pages <= 10:
+                        break
+                    else:
+                        print("❌ Введите от 1 до 10")
+                else:
+                    print("❌ Введите число")
 
             # 3. Получаем вакансии API
             print(f"\n📡 Ищем вакансии по запросу: '{search_query}'...")
             try:
-                hh_vacancies_data = hh_api.get_vacancies(search_query)
+                hh_vacancies_data = hh_api.get_vacancies(
+                    keyword=search_query,
+                    max_pages=max_pages,
+                    city=city if city else None
+                )
                 vacancies_list = Vacancy.cast_to_object_list(hh_vacancies_data)
 
                 if not vacancies_list:
                     print(f"📭 По запросу '{search_query}' вакансий не найдено.")
-                    return
+                    continue
 
                 print(f"✅ Найдено вакансий: {len(vacancies_list)}")
 
@@ -77,7 +173,7 @@ def user_interaction() -> None:
 
             if not filtered_vacancies:
                 print("📭 После фильтрации по ключевым словам вакансий не осталось.")
-                return
+                continue
 
             print(f"✅ После фильтрации осталось: {len(filtered_vacancies)}")
 
@@ -129,18 +225,47 @@ def user_interaction() -> None:
 
             if save_choice in ['да', 'д', 'yes', 'y']:
                 try:
+                    saved_count = 0
+                    already_existed = 0
+
                     for vacancy in top_vacancies:
-                        json_saver.add_vacancy(vacancy)
-                    print(f"✅ Результаты сохранены в файл: {json_saver.filename}")
+
+                        if not json_saver.is_vacancy_saved(vacancy.url):
+                            json_saver.add_vacancy(vacancy)
+                            saved_count += 1
+                        else:
+                            already_existed += 1
+
+                    print(f"✅ Сохранено новых вакансий: {saved_count}")
+                    if already_existed > 0:
+                        print(f"📌 Уже было в файле: {already_existed}")
+                    print(f"💾 Файл: {json_saver.filename}")
+
                 except Exception as e:
                     print(f"❌ Ошибка при сохранении: {e}")
-            else:
-                print("📄 Результаты не сохранены.")
 
-            continue_search = input("\n🔍 Хотите выполнить новый поиск? (да/нет): ").strip().lower()
-            if continue_search not in ['да', 'д', 'yes', 'y']:
+            print("═" * 50)
+            print("1. 🔍 Новый поиск вакансий")
+            print("2. 📋 Показать сохранённые вакансии")
+            print("3. 🗑️  Удалить вакансию")
+            print("4. 🧹 Очистить файл")
+            print("5. 👋 Выйти")
+
+            choice = input("\n👉 Ваш выбор (1-5): ").strip()
+
+            if choice == "1":
+                continue  # НОВЫЙ ПОИСК
+            elif choice == "2":
+                show_saved_vacancies(json_saver)
+            elif choice == "3":
+                delete_vacancy_menu(json_saver)
+            elif choice == "4":
+                clear_file_menu(json_saver)
+            elif choice == "5":
                 print("\n👋 До свидания!")
                 break
+            else:
+                print("❌ Неверный выбор")
 
 
             # 9. Завершение

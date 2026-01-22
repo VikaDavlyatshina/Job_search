@@ -1,5 +1,6 @@
 from typing import List
 from src.vacancy import Vacancy
+from src.storage import JSONSaver
 
 def filter_vacancies(vacancies: List[Vacancy], filter_words: List[str]) -> List[Vacancy]:
     """
@@ -150,23 +151,31 @@ def get_vacancies_by_salary(vacancies: List[Vacancy], salary_range: str) -> List
 
 def sort_vacancies_by_salary(vacancies: List[Vacancy]) -> List[Vacancy]:
     """
-    Сортирует вакансии по убыванию предполагаемой зарплаты.
-    :param vacancies: Список вакансий для сортировки
-    :return: Отсортированный список вакансий
+    Сортирует вакансии по убыванию зарплаты.
+    Сначала идут вакансии с самой высокой МАКСИМАЛЬНОЙ зарплатой.
     """
-
-    # Если список пустой или None
     if not vacancies:
         return []
 
-    # Сортируем по зарплате по убыванию (reverse=True - сортировка по убыванию)
+    # Создаём функцию для вычисления зарплаты для сортировки
+    def get_salary_for_sort(vacancy: Vacancy) -> int:
+        # Берём МАКСИМАЛЬНУЮ зарплату (salary_to)
+        if vacancy.salary_to is not None:
+            return vacancy.salary_to
+        # Если нет "до", берём "от"
+        elif vacancy.salary_from is not None:
+            return vacancy.salary_from
+        # Если зарплаты нет совсем
+        else:
+            return 0
+
+    # Сортируем по убыванию зарплаты
     sorted_list = sorted(
         vacancies,
-        key=lambda vacancy: vacancy.get_estimated_salary() or 0,
-        reverse=True
+        key=get_salary_for_sort,
+        reverse=True  # По убыванию (от большего к меньшему)
     )
 
-    # Возвращаем отсортированный список
     return sorted_list
 
 
@@ -180,12 +189,11 @@ def get_top_vacancies(vacancies: List[Vacancy], top_n: int) -> List[Vacancy]:
 
     # Валидация входных данных
     if top_n <= 0:
-        # Можно добавить предупреждение (для отладки)
-        # print(f"⚠️  Запрошено некорректное количество: {top_n}")
+        # print(f" Запрошено некорректное количество: {top_n}")
         return []
 
     if not vacancies:
-        # print("⚠️  Список вакансий пуст")
+        # print("Список вакансий пуст")
         return []
 
     # 1. Сортируем вакансии по убыванию зарплаты
@@ -195,7 +203,6 @@ def get_top_vacancies(vacancies: List[Vacancy], top_n: int) -> List[Vacancy]:
     # Берём минимум из: запрошенного количества и фактического количества
     n_to_take = min(top_n, len(sorted_list))
 
-    # Логирование (опционально)
     if n_to_take < top_n:
         # print(f"ℹ️  Запрошено {top_n}, но найдено только {len(sorted_vacancies)}")
         pass
@@ -257,3 +264,4 @@ def format_salary(salary: int) -> str:
         return "Не указана"
 
     return f"{salary:,} руб.".replace(",", " ")
+

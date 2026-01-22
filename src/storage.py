@@ -75,25 +75,42 @@ class JSONSaver(BaseStorage):
     def _dict_to_vacancy(self, item: Dict[str, Any]) -> Vacancy:
         """Преобразует словарь в объект Vacancy"""
 
+        salary_from = item.get("salary_from")
+        salary_to = item.get("salary_to")
+
+        # Преобразуем "Не указано" -> None
+        if salary_from == "Не указано":
+            salary_from = None
+        elif salary_from is not None:
+            try:
+                salary_from = int(salary_from)
+            except (ValueError, TypeError):
+                salary_from = None
+
+        if salary_to == "Не указано":
+            salary_to = None
+        elif salary_to is not None:
+            try:
+                salary_to = int(salary_to)
+            except (ValueError, TypeError):
+                salary_to = None
+
         return Vacancy(
             name=item.get("name", ""),
             area=item.get("area"),
-            salary_from=item.get("salary_from"),
-            salary_to=item.get("salary_to"),
+            salary_from=salary_from,
+            salary_to=salary_to,
             requirement=item.get("requirement"),
             responsibility=item.get("responsibility"),
             schedule=item.get("schedule"),
             url=item.get("url", ""),
         )
 
-    def add_vacancy(self, vacancy: Vacancy) -> bool:
+    def add_vacancy(self, vacancy: Vacancy) -> None:
         """
         Добавляет вакансию в файл.
         :param vacancy:
                Объект вакансии для сохранения
-        :return:
-               True - если вакансия добавлена
-               False - если вакансия уже существует
         """
 
         data = self._load_data()
@@ -101,14 +118,14 @@ class JSONSaver(BaseStorage):
         # Проверяем дубликаты по URL (уникальный идентификатор)
         for item in data:
             if item.get('url') == vacancy.url:
-                return False # Вакансия уже существует
+                print(f"Вакансия уже существует: {vacancy.url}")
+                return
 
         # Используем метод to_dict() из класса Vacancy
         vacancy_dict = vacancy.to_dict()
         data.append(vacancy_dict)
 
         self._save_data(data)
-        return True  # Вакансия успешно добавлена
 
     def get_vacancies(self, **criteria) -> List[Vacancy]:
         """
@@ -131,7 +148,19 @@ class JSONSaver(BaseStorage):
         for item in data:
             match = True
             for key, value in criteria.items():
-                if key not in item or item.get(key) != value:
+                item_value = item.get(key)
+
+                if item_value is None:
+                    match = False
+                    break
+
+                if isinstance(item_value, str) and isinstance(value, str):
+                    # Для строк: нечёткое сравнение (игнорируем регистр)
+                    if value.lower() not in item_value.lower():
+                        match = False
+                        break
+                elif item_value != value:
+                    # Для чисел и других типов: строгое сравнение
                     match = False
                     break
 
@@ -140,26 +169,39 @@ class JSONSaver(BaseStorage):
 
         return result
 
-    def delete_vacancy(self, vacancy: Vacancy) -> bool:
+    def delete_vacancy(self, vacancy: Vacancy) -> None:  # ← ИЗМЕНИЛИ: None вместо bool
         """
         Удаляет вакансию из файла.
-        :param vacancy:
-                 Объект вакансии для удаления
-        :return:
-                True - если вакансия удалена
-               False - если вакансия не найдена
         """
         data = self._load_data()
+
         initial_count = len(data)
 
-        # Оставляем все вакансии, кроме удаляемой (определяем по URL)
+        # Оставляем все вакансии, кроме удаляемой
         data = [item for item in data if item.get("url") != vacancy.url]
 
         if len(data) < initial_count:
             self._save_data(data)
-            return True
+            print(f"Вакансия удалена: {vacancy.url}")
         else:
-            return False
+            print(f"Вакансия не найдена: {vacancy.url}")
+
+    def delete_vacancy_by_url(self, url: str) -> bool:
+        """
+        Удаляет вакансию по URL
+        :param url: URL вакансии
+        :return: True если удалено, False если не найдено
+        """
+        data = self._load_data()
+        initial_count = len(data)
+
+        # Оставляем все вакансии, кроме указанной
+        data = [item for item in data if item.get("url") != url]
+
+        if len(data) < initial_count:
+            self._save_data(data)
+            return True
+        return False
 
     def is_vacancy_saved(self, url: str) -> bool:
         """Проверяет, сохранена ли вакансия с указанным URL."""

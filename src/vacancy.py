@@ -222,8 +222,8 @@ class Vacancy:
         return {
              "name": self.name,
              "area": self.area,
-             "salary_from": self.salary_from,
-             "salary_to": self.salary_to,
+             "salary_from": self.salary_from if self.salary_from is not None else "Не указано",
+             "salary_to": self.salary_to if self.salary_to is not None else "Не указано",
              "requirement": self.requirement,
              "responsibility": self.responsibility,
              "schedule": self.schedule,
