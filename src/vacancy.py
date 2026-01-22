@@ -1,4 +1,5 @@
 from typing import Dict, Any, List
+import re
 
 
 
@@ -7,6 +8,19 @@ class Vacancy:
 
      # Список разрешенных атрибутов (для экономии памяти)
     __slots__ = ("name", "area", "salary_from", "salary_to", "requirement", "responsibility", "schedule", "url")
+
+    @staticmethod
+    def __clean_html(text: str) -> str:
+        """
+        Удаляет HTML-теги из текста
+
+        Args:
+            text: Текст с HTML-тегами
+
+        Returns:
+            Очищенный текст
+        """
+        return re.sub(r'<[^>]+>', '', text)
 
     # Инициализация
     def __init__(
@@ -27,8 +41,9 @@ class Vacancy:
         self.salary_from = self.__validate_salary(salary_from)   # Зарплата от
         self.salary_to = self.__validate_salary(salary_to)       # Зарплата до
 
-        self.requirement = requirement or "Не указано"          # Требования
-        self.responsibility = responsibility or "Не указано"    # Обязанности
+        # Очищаем HTML из текстовых полей
+        self.requirement = self.__clean_html(requirement) if requirement else "Не указано"         # Требования
+        self.responsibility = self.__clean_html(responsibility) if responsibility else "Не указано"   # Обязанности
         self.schedule = schedule or "Не указано"                # График работы
         self.url = self.__validate_url(url)                     # Ссылка на вакансию
 
@@ -188,6 +203,34 @@ class Vacancy:
             return False  # Одна с зарплатой, другая без
 
         return self_salary == other_salary
+
+    def __le__(self, other: "Vacancy") -> bool:
+        """
+        Меньше или равно (<=) по зарплате
+
+        Args:
+            other: Другая вакансия для сравнения
+
+        Returns:
+            True если текущая вакансия имеет зарплату <= другой
+        """
+        if not isinstance(other, Vacancy):
+            return NotImplemented
+        return self < other or self == other
+
+    def __ge__(self, other: "Vacancy") -> bool:
+        """
+        Больше или равно (>=) по зарплате
+
+        Args:
+            other: Другая вакансия для сравнения
+
+        Returns:
+            True если текущая вакансия имеет зарплату >= другой
+        """
+        if not isinstance(other, Vacancy):
+            return NotImplemented
+        return self > other or self == other
 
     def __str__(self) -> str:
         """Для строкового представления вакансий"""

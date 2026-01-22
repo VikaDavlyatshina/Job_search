@@ -9,7 +9,7 @@ def filter_vacancies(vacancies: List[Vacancy], filter_words: List[str]) -> List[
     :param vacancies:
            Список вакансий для фильтрации
     :param filter_words:
-        Список ключевых слов для поиска в вакансии
+        Список ключевых слов для поиска в описании вакансии
     :return:
           Отфильтрованный список
     """
@@ -23,25 +23,21 @@ def filter_vacancies(vacancies: List[Vacancy], filter_words: List[str]) -> List[
 
     for vacancy in vacancies:
 
-        # текст поиска
-        search_text = (
-            f"{vacancy.name}"
-            f"{vacancy.requirement or ''}"
-            f"{vacancy.responsibility or ''}"
-        ).lower()
+        description = (vacancy.requirement or "").lower()
 
-        # проверяем каждое ключевое слово
-        for key_word in filter_words:
-            key_word_lower = key_word.lower().strip()
+        # Проверяем каждое ключевое слово
+        for keyword in filter_words:
+            keyword_lower = keyword.lower().strip()
 
-            if not key_word_lower:
+            if not keyword_lower:
                 continue
-            if key_word_lower in search_text:
+
+            # Если ключевое слово найдено в описании
+            if keyword_lower in description:
                 filtered.append(vacancy)
-                break
+                break  # Достаточно одного совпадения
 
     return filtered
-
 
 def get_vacancies_by_salary(vacancies: List[Vacancy], salary_range: str) -> List[Vacancy]:
     """

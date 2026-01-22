@@ -27,19 +27,30 @@ class BaseStorage(ABC):
 class JSONSaver(BaseStorage):
     """Класс для сохранения вакансий в JSON-файл"""
 
-    def __init__(self, filename: str = "vacancies.json"):
+    def __init__(self, filename: str = None):
         """
         Инициализирует сохранение в указанный файл
-        :param filename: Имя JSON-файла для сохранения
+        :param filename:
+                    Имя JSON-файла для сохранения.
+                    Если None, используется 'vacancies.json'
         """
 
-        self.__filename = filename
+        if filename is None:
+            self.__filename = "vacancies.json"
+        else:
+            # Убедимся, что у файла расширение .json
+            if not filename.endswith('.json'):
+                self.__filename = f"{filename}.json"
+            else:
+                self.__filename = filename
+
+        # Создаём Path объект
         self.__path = Path(self.__filename)
 
         # Создаём файл, если не существует
         if not self.__path.exists():
             self.__path.write_text("[]", encoding="utf-8")
-            print(f"Создан новый файл: {filename}")
+            print(f"Создан новый файл: {self.__filename}")
 
     @property
     def filename(self) -> str:

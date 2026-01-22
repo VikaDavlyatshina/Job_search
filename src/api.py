@@ -24,20 +24,15 @@ class BaseVacancyApi(ABC):
         pass
 
     @abstractmethod
-    def get_vacancies(self, keyword: str, **kwargs) -> List[Dict]:
+    def get_vacancies(self, keyword: str) -> List[Dict]:
         """
         Получает список вакансий из API
 
         Args:
             keyword (str): Поисковый запрос (например: "Python разработчик")
-            **kwargs: Произвольные именованные аргументы для гибкости
 
         Returns:
             List[Dict]: Список словарей с данными вакансий в формате API
-
-        Why **kwargs?
-        Позволяет добавлять параметры (город, количество страниц) без изменения
-        сигнатуры метода в абстрактном классе
         """
         pass
 
