@@ -41,6 +41,11 @@ class JSONSaver(BaseStorage):
             self.__path.write_text("[]", encoding="utf-8")
             print(f"Создан новый файл: {filename}")
 
+    @property
+    def filename(self) -> str:
+        """Возвращает имя файла"""
+        return self.__filename
+
 
     def _load_data(self)-> List[Dict[str, Any]]:
         """Загружает данные из JSON-файла"""
@@ -156,52 +161,8 @@ class JSONSaver(BaseStorage):
         else:
             return False
 
-    def get_vacancies_by_keyword(self, keyword: str) -> List[Vacancy]:
-        """
-        Ищет вакансии по ключевому слову в названии и описании.
-        :param keyword:
-                Ключевое слово для поиска
-        :return:
-                Список найденных вакансий
-        """
-
-        data = self._load_data()
-        keyword_lower = keyword.lower()
-
-        result = []
-        for item in data:
-            # Ищем в разных полях
-            search_fields = ['name', 'area', 'requirement', 'responsibility',]
-            for field in search_fields:
-                field_value = item.get(field, '')
-                if keyword_lower in field_value.lower():
-                    result.append(self._dict_to_vacancy(item))
-                    break
-
-        return result
-
-    def count_vacancies(self) -> int:
-        """Возвращает количество сохраненных вакансий."""
-        return len(self._load_data())
-
-    def get_all_vacancies(self) -> List[Vacancy]:
-        """Возвращает все сохраненные вакансии (удобный алиас)."""
-        return self.get_vacancies()
-
     def is_vacancy_saved(self, url: str) -> bool:
         """Проверяет, сохранена ли вакансия с указанным URL."""
         data = self._load_data()
         return any(item.get('url') == url for item in data)
-
-    def get_top_vacancies(self, n: int) -> List[Vacancy]:
-        """
-        Возвращает N вакансий
-        :param n:
-            Количество вакансий для возврата
-        :return:
-           Список из N-вакансий
-        """
-
-        all_vacancies = [self._dict_to_vacancy(item) for item in self._load_data()]
-        return all_vacancies[:n]
 

@@ -178,10 +178,14 @@ def get_top_vacancies(vacancies: List[Vacancy], top_n: int) -> List[Vacancy]:
     :return: Список top_n вакансий
     """
 
+    # Валидация входных данных
     if top_n <= 0:
+        # Можно добавить предупреждение (для отладки)
+        # print(f"⚠️  Запрошено некорректное количество: {top_n}")
         return []
 
     if not vacancies:
+        # print("⚠️  Список вакансий пуст")
         return []
 
     # 1. Сортируем вакансии по убыванию зарплаты
@@ -190,6 +194,11 @@ def get_top_vacancies(vacancies: List[Vacancy], top_n: int) -> List[Vacancy]:
     # 2. Определяем, сколько вакансий взять.
     # Берём минимум из: запрошенного количества и фактического количества
     n_to_take = min(top_n, len(sorted_list))
+
+    # Логирование (опционально)
+    if n_to_take < top_n:
+        # print(f"ℹ️  Запрошено {top_n}, но найдено только {len(sorted_vacancies)}")
+        pass
 
     # 3. Возвращаем первые n_to_take вакансий
     return sorted_list[:n_to_take]
@@ -239,84 +248,12 @@ def print_vacancies(vacancies: List[Vacancy]) -> None:
     print('=' * 60)
 
 
-def test_all_utils_functions():
-    """Комплексный тест всех функций utils.py"""
+def format_salary(salary: int) -> str:
+    """
+    Форматирует зарплату для красивого вывода.
+    Пример: 100000 -> "100 000 руб."
+    """
+    if salary is None:
+        return "Не указана"
 
-    print("🧪 КОМПЛЕКСНЫЙ ТЕСТ ВСЕХ ФУНКЦИЙ UTILS.PY 🧪\n")
-
-    # Создаем разнообразные тестовые вакансии
-    vacancies = [
-        Vacancy(
-            "Python Developer",
-            "Москва",
-            100000,
-            150000,
-            "Опыт работы от 2 лет, знание Django/Flask",
-            "Разработка backend приложений, code review",
-            "Полный день",
-            "https://hh.ru/vacancy/12345"
-        ),
-        Vacancy(
-            "Data Scientist",
-            "Санкт-Петербург",
-            None,
-            200000,
-            "Знание Python, SQL, ML, статистика",
-            "Анализ данных, построение ML моделей",
-            "Удаленная работа",
-            "https://hh.ru/vacancy/67890"
-        ),
-        Vacancy(
-            "Junior Python Developer",
-            "Новосибирск",
-            80000,
-            None,
-            "Базовые знания Python",
-            "Помощь senior разработчикам, написание тестов",
-            "Гибкий график",
-            "https://hh.ru/vacancy/11111"
-        ),
-        Vacancy(
-            "Стажер",
-            "Казань",
-            None,
-            None,
-            "Студент 3-4 курса",
-            "Обучение, выполнение мелких задач",
-            "Частичная занятость",
-            "https://hh.ru/vacancy/22222"
-        ),
-    ]
-
-    print("1. Тестируем filter_vacancies():")
-    filtered = filter_vacancies(vacancies, ["python", "разработка"])
-    print(f"   Найдено после фильтрации по ['python', 'разработка']: {len(filtered)}")
-
-    print("\n2. Тестируем get_vacancies_by_salary():")
-    by_salary = get_vacancies_by_salary(vacancies, "от 90000")
-    print(f"   Найдено с зарплатой 'от 90000': {len(by_salary)}")
-
-    print("\n3. Тестируем sort_vacancies_by_salary():")
-    sorted_vac = sort_vacancies_by_salary(vacancies)
-    print("   Порядок после сортировки:")
-    for i, v in enumerate(sorted_vac, 1):
-        salary = v.get_estimated_salary()
-        print(f"   {i}. {v.name}: {salary if salary else 'Не указана'}")
-
-    print("\n4. Тестируем get_top_vacancies():")
-    top_2 = get_top_vacancies(vacancies, 2)
-    print(f"   Топ-2 вакансий: {[v.name for v in top_2]}")
-
-    print("\n5. Тестируем print_vacancies() - выводим топ-2:")
-    print("   (должен быть красивый вывод с эмодзи)")
-    print_vacancies(top_2)
-
-    print("\n" + "=" * 60)
-    print("✅ ВСЕ ФУНКЦИИ UTILS.PY РАБОТАЮТ КОРРЕКТНО!")
-    print("=" * 60)
-
-
-# В конце файла добавьте:
-if __name__ == "__main__":
-    test_all_utils_functions()
-
+    return f"{salary:,} руб.".replace(",", " ")

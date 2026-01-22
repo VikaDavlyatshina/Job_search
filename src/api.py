@@ -24,6 +24,7 @@ class HeadHunterAPI(BaseVacancyApi):
     def __init__(self) -> None:
         self.__base_url = "https://api.hh.ru/vacancies"
         self.__session = None
+        self._connect()
 
     def _connect(self) -> None:
         """
@@ -56,6 +57,7 @@ class HeadHunterAPI(BaseVacancyApi):
             # Если ошибка - сбрасываем сессию
             self.__session = None
             raise ConnectionError(f"Не удалось подключиться к API hh.ru: {e}")
+
 
 
 
