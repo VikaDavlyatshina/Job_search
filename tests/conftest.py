@@ -1,10 +1,13 @@
-from unittest.mock import Mock
-import pytest
 import os
-from src.vacancy import Vacancy
-from src.storage import JSONSaver
 import tempfile
-from typing import Tuple, Dict, Any, Callable, Optional, Generator, List
+from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
+from unittest.mock import Mock
+
+import pytest
+
+from src.storage import JSONSaver
+from src.vacancy import Vacancy
+
 
 # 1. ПРОСТАЯ ФАБРИКА ДЛЯ СОЗДАНИЯ ВАКАНСИЙ
 @pytest.fixture
@@ -15,14 +18,14 @@ def make_vacancy() -> Callable[..., Vacancy]:
     """
 
     def create(
-            name: str = "Тестовая вакансия",
-            salary_from: Optional[int] = None,
-            salary_to: Optional[int] = None,
-            area: str = "Москва",
-            requirement: str = "Требования",
-            responsibility: str = "Обязанности",
-            schedule: str = "Полный день",
-            url: str = "https://test.com/vacancy"
+        name: str = "Тестовая вакансия",
+        salary_from: Optional[int] = None,
+        salary_to: Optional[int] = None,
+        area: str = "Москва",
+        requirement: str = "Требования",
+        responsibility: str = "Обязанности",
+        schedule: str = "Полный день",
+        url: str = "https://test.com/vacancy",
     ) -> Vacancy:
         """
         Создает объект Vacancy
@@ -39,7 +42,7 @@ def make_vacancy() -> Callable[..., Vacancy]:
             requirement=requirement,
             responsibility=responsibility,
             schedule=schedule,
-            url=url
+            url=url,
         )
 
     return create
@@ -49,48 +52,28 @@ def make_vacancy() -> Callable[..., Vacancy]:
 @pytest.fixture
 def developer_vacancy(make_vacancy: Callable[..., Vacancy]) -> Vacancy:
     """Готовая вакансия разработчика с зарплатой"""
-    return make_vacancy(
-        name="Python Developer",
-        salary_from=100000,
-        salary_to=150000
-    )
+    return make_vacancy(name="Python Developer", salary_from=100000, salary_to=150000)
 
 
 @pytest.fixture
 def intern_vacancy(make_vacancy: Callable[..., Vacancy]) -> Vacancy:
     """Готовая вакансия стажера без зарплаты"""
-    return make_vacancy(
-        name="Стажер Python",
-        salary_from=None,
-        salary_to=None
-    )
+    return make_vacancy(name="Стажер Python", salary_from=None, salary_to=None)
 
 
 @pytest.fixture
 def middle_vacancy(make_vacancy: Callable[..., Vacancy]) -> Vacancy:
     """Готовая вакансия с зарплатой только 'от'"""
-    return make_vacancy(
-        name="Middle Python Developer",
-        salary_from=120000,
-        salary_to=None
-    )
+    return make_vacancy(name="Middle Python Developer", salary_from=120000, salary_to=None)
 
 
 # 3. ДВЕ ВАКАНСИИ ДЛЯ СРАВНЕНИЯ
 @pytest.fixture
 def junior_and_senior(make_vacancy: Callable[..., Vacancy]) -> Tuple[Vacancy, Vacancy]:
     """Возвращает две вакансии: младшего и старшего разработчика"""
-    junior = make_vacancy(
-        name="Junior Python",
-        salary_from=50000,
-        salary_to=70000
-    )
+    junior = make_vacancy(name="Junior Python", salary_from=50000, salary_to=70000)
 
-    senior = make_vacancy(
-        name="Senior Python",
-        salary_from=200000,
-        salary_to=300000
-    )
+    senior = make_vacancy(name="Senior Python", salary_from=200000, salary_to=300000)
 
     return junior, senior
 
@@ -119,10 +102,7 @@ def api_vacancy_no_salary() -> Dict[str, Any]:
         "name": "Стажер Python",
         "area": {"name": "Санкт-Петербург"},
         "salary": None,
-        "snippet": {
-            "requirement": "Базовые знания Python.",
-            "responsibility": "Помощь в разработке."
-        },
+        "snippet": {"requirement": "Базовые знания Python.", "responsibility": "Помощь в разработке."},
         "schedule": {"name": "Удаленная работа"},
         "alternate_url": "https://hh.ru/vacancy/87654321",
     }
@@ -185,6 +165,7 @@ def mock_session(mock_api_response: Dict[str, Any]) -> Mock:
 
     return mock_sess
 
+
 # 6. ФИКСТУРЫ ДЛЯ ТЕСТОВ STORAGE.PY
 @pytest.fixture
 def temp_json_file() -> Generator[str, None, None]:
@@ -192,8 +173,8 @@ def temp_json_file() -> Generator[str, None, None]:
     Создает временный JSON файл для тестов
     Автоматически удаляется после теста
     """
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-        f.write('[]')  # Пустой список
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        f.write("[]")  # Пустой список
         temp_path = f.name
 
     yield temp_path  # Возвращаем путь к файлу
@@ -220,7 +201,7 @@ def sample_vacancy() -> Vacancy:
         requirement="Знать Python",
         responsibility="Писать код",
         schedule="Полный день",
-        url="https://hh.ru/vacancy/123"
+        url="https://hh.ru/vacancy/123",
     )
 
 
@@ -235,7 +216,7 @@ def java_vacancy() -> Vacancy:
         requirement="Знать Java",
         responsibility="Разработка",
         schedule="Удаленно",
-        url="https://hh.ru/vacancy/456"
+        url="https://hh.ru/vacancy/456",
     )
 
 
@@ -321,10 +302,10 @@ def python_intern() -> Vacancy:
 
 @pytest.fixture
 def all_vacancies(
-        python_developer: Vacancy,
-        java_developer: Vacancy,
-        frontend_developer: Vacancy,
-        python_intern: Vacancy,
+    python_developer: Vacancy,
+    java_developer: Vacancy,
+    frontend_developer: Vacancy,
+    python_intern: Vacancy,
 ) -> List[Vacancy]:
     """
     Фикстура: все тестовые вакансии вместе

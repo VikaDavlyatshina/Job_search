@@ -1,6 +1,7 @@
+from typing import Any, Callable, Dict, Tuple
 import pytest
-from typing import Tuple, Dict, Any, Callable
 from src.vacancy import Vacancy
+
 
 def test_developer_salary(developer_vacancy: Vacancy) -> None:
     """Тест вакансии разработчика"""
@@ -11,12 +12,7 @@ def test_developer_salary(developer_vacancy: Vacancy) -> None:
 
 def test_custom_vacancy(make_vacancy: Callable[..., Vacancy]) -> None:
     """Тест создания своей вакансии"""
-    my_vacancy = make_vacancy(
-        name="Data Scientist",
-        salary_from=150000,
-        salary_to=250000,
-        area="Санкт-Петербург"
-    )
+    my_vacancy = make_vacancy(name="Data Scientist", salary_from=150000, salary_to=250000, area="Санкт-Петербург")
 
     assert my_vacancy.name == "Data Scientist"
     assert my_vacancy.area == "Санкт-Петербург"
@@ -30,18 +26,19 @@ def test_junior_vs_senior(junior_and_senior: Tuple[Vacancy, Vacancy]) -> None:
     assert senior > junior
 
 
-@pytest.mark.parametrize("salary_from, salary_to, expected", [
-    (100000, 150000, 125000),
-    (120000, None, 120000),
-    (None, 180000, 180000),
-])
-def test_salary_calculation(make_vacancy: Callable[..., Vacancy], salary_from: int | None, salary_to: int | None, expected: int) -> None:
+@pytest.mark.parametrize(
+    "salary_from, salary_to, expected",
+    [
+        (100000, 150000, 125000),
+        (120000, None, 120000),
+        (None, 180000, 180000),
+    ],
+)
+def test_salary_calculation(
+    make_vacancy: Callable[..., Vacancy], salary_from: int | None, salary_to: int | None, expected: int
+) -> None:
     """Параметризованный тест зарплаты"""
-    vacancy = make_vacancy(
-        name="Тест",
-        salary_from=salary_from,
-        salary_to=salary_to
-    )
+    vacancy = make_vacancy(name="Тест", salary_from=salary_from, salary_to=salary_to)
 
     assert vacancy.get_estimated_salary() == expected
 

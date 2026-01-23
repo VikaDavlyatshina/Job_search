@@ -1,8 +1,10 @@
 from typing import List
+
 from src.api import HeadHunterAPI
 from src.storage import JSONSaver
+from src.utils import (filter_vacancies, filter_vacancies_by_profession, get_top_vacancies, get_vacancies_by_salary,
+                       print_vacancies)
 from src.vacancy import Vacancy
-from src.utils import filter_vacancies_by_profession, filter_vacancies, get_vacancies_by_salary,get_top_vacancies, print_vacancies
 
 
 # Вспомогательные функции (остаются как у тебя)
@@ -20,7 +22,7 @@ def show_saved_vacancies(saver: JSONSaver) -> None:
         print(f"\n{'─' * 40}")
         print(f"№{i}. {vacancy.name}")
         print(f"   Город: {vacancy.area}")
-        print(f"   Зарплата: ", end="")
+        print("   Зарплата: ", end="")
         if vacancy.salary_from or vacancy.salary_to:
             if vacancy.salary_from:
                 print(f"от {vacancy.salary_from}", end=" ")

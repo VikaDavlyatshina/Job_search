@@ -1,8 +1,9 @@
 import json
 import os
 import tempfile
-from src.vacancy import Vacancy
+
 from src.storage import JSONSaver
+from src.vacancy import Vacancy
 
 
 def test_create_saver_default_filename() -> None:
@@ -21,7 +22,7 @@ def test_create_saver_default_filename() -> None:
             assert os.path.exists("vacancies.json")
 
             # Проверяем содержимое файла
-            with open("vacancies.json", 'r', encoding='utf-8') as f:
+            with open("vacancies.json", "r", encoding="utf-8") as f:
                 data = json.load(f)
                 assert data == []  # Должен быть пустой список
 
@@ -42,7 +43,7 @@ def test_create_saver_custom_filename() -> None:
 
 def test_create_saver_existing_file() -> None:
     """Тест: создание JSONSaver когда файл уже существует с данными"""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         # Создаем файл с данными
         existing_data = [{"name": "Существующая вакансия", "url": "test.com"}]
         json.dump(existing_data, f)
@@ -88,11 +89,7 @@ def test_add_duplicate_vacancy(json_saver: JSONSaver, sample_vacancy: Vacancy) -
     assert len(vacancies) == 1  # Дубликат не должен добавиться
 
 
-def test_get_all_vacancies(
-    json_saver: JSONSaver,
-    sample_vacancy: Vacancy,
-    java_vacancy: Vacancy
-) -> None:
+def test_get_all_vacancies(json_saver: JSONSaver, sample_vacancy: Vacancy, java_vacancy: Vacancy) -> None:
     """Тест: получение всех вакансий из файла"""
     # Добавляем две вакансии
     json_saver.add_vacancy(sample_vacancy)
@@ -112,11 +109,7 @@ def test_get_all_vacancies(
     assert "Java Developer" in names
 
 
-def test_get_vacancies_with_filters(
-    json_saver: JSONSaver,
-    sample_vacancy: Vacancy,
-    java_vacancy: Vacancy
-) -> None:
+def test_get_vacancies_with_filters(json_saver: JSONSaver, sample_vacancy: Vacancy, java_vacancy: Vacancy) -> None:
     """Тест: фильтрация вакансий по критериям"""
     # Добавляем вакансии
     json_saver.add_vacancy(sample_vacancy)
@@ -133,11 +126,7 @@ def test_get_vacancies_with_filters(
     assert python_vacancies[0].name == "Python Developer"
 
 
-def test_delete_vacancy(
-    json_saver: JSONSaver,
-    sample_vacancy: Vacancy,
-    java_vacancy: Vacancy
-) -> None:
+def test_delete_vacancy(json_saver: JSONSaver, sample_vacancy: Vacancy, java_vacancy: Vacancy) -> None:
     """Тест: удаление вакансии"""
     # Добавляем две вакансии
     json_saver.add_vacancy(sample_vacancy)
@@ -187,11 +176,7 @@ def test_check_vacancy_saved(json_saver: JSONSaver, sample_vacancy: Vacancy) -> 
     assert json_saver.is_vacancy_saved("https://nonexistent.com") is False
 
 
-def test_clear_all_vacancies(
-    json_saver: JSONSaver,
-    sample_vacancy: Vacancy,
-    java_vacancy: Vacancy
-) -> None:
+def test_clear_all_vacancies(json_saver: JSONSaver, sample_vacancy: Vacancy, java_vacancy: Vacancy) -> None:
     """Тест: очистка всех вакансий"""
     # Добавляем две вакансии
     json_saver.add_vacancy(sample_vacancy)
@@ -210,7 +195,7 @@ def test_clear_all_vacancies(
 # ТЕСТЫ ГРАНИЧНЫХ СЛУЧАЕВ
 def test_dict_to_vacancy_conversion() -> None:
     """Тест: преобразование словаря в объект Vacancy"""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         file_path = f.name
 
     try:
@@ -225,7 +210,7 @@ def test_dict_to_vacancy_conversion() -> None:
             "requirement": "Требования",
             "responsibility": "Обязанности",
             "schedule": "Полный день",
-            "url": "https://test.com"
+            "url": "https://test.com",
         }
 
         # Преобразуем словарь в Vacancy
@@ -244,7 +229,7 @@ def test_dict_to_vacancy_conversion() -> None:
 def test_corrupted_json_file() -> None:
     """Тест: что происходит если JSON файл поврежден"""
     # Создаем файл с неправильным JSON
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False, encoding='utf-8') as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
         f.write("{это не правильный json")  # Битый JSON
         file_path = f.name
 
@@ -258,4 +243,3 @@ def test_corrupted_json_file() -> None:
 
     finally:
         os.unlink(file_path)
-

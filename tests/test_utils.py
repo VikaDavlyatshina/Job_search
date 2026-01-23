@@ -1,27 +1,19 @@
-import pytest
 from typing import List
-from src.utils import (
-    filter_vacancies_by_profession,
-    filter_vacancies,
-    format_salary,
-    get_top_vacancies,
-    get_vacancies_by_salary,
-    print_vacancies,
-    sort_vacancies_by_salary,
-)
+import pytest
+from src.utils import (filter_vacancies, filter_vacancies_by_profession, format_salary, get_top_vacancies,
+                       get_vacancies_by_salary, print_vacancies, sort_vacancies_by_salary)
 from src.vacancy import Vacancy
 
 
-
 def test_filter_by_profession_single_keyword(
-        all_vacancies: List[Vacancy],
-        python_developer: Vacancy,
-        python_intern: Vacancy,
+    all_vacancies: List[Vacancy],
+    python_developer: Vacancy,
+    python_intern: Vacancy,
 ) -> None:
     """
     Тест: фильтрация по одной профессии в названии
 
-    Проверяет, что функция находит вакансии, содержащие 
+    Проверяет, что функция находит вакансии, содержащие
     ключевое слово в названии
     """
     # Действие: ищем вакансии с "Python" в названии
@@ -34,10 +26,10 @@ def test_filter_by_profession_single_keyword(
 
 
 def test_filter_by_profession_multiple_keywords(
-        all_vacancies: List[Vacancy],
-        python_developer: Vacancy,
-        java_developer: Vacancy,
-        python_intern: Vacancy,
+    all_vacancies: List[Vacancy],
+    python_developer: Vacancy,
+    java_developer: Vacancy,
+    python_intern: Vacancy,
 ) -> None:
     """
     Тест: фильтрация по нескольким профессиям (Python ИЛИ Java)
@@ -56,7 +48,7 @@ def test_filter_by_profession_multiple_keywords(
 
 
 def test_filter_by_profession_case_insensitive(
-        all_vacancies: List[Vacancy],
+    all_vacancies: List[Vacancy],
 ) -> None:
     """
     Тест: фильтрация не зависит от регистра
@@ -74,7 +66,7 @@ def test_filter_by_profession_case_insensitive(
 
 
 def test_filter_by_profession_empty_keywords(
-        all_vacancies: List[Vacancy],
+    all_vacancies: List[Vacancy],
 ) -> None:
     """
     Тест: фильтрация без ключевых слов
@@ -89,13 +81,9 @@ def test_filter_by_profession_empty_keywords(
     assert len(result) == 4
 
 
-# ============================================================================
-# ТЕСТЫ ДЛЯ ФУНКЦИИ filter_vacancies (фильтрация по описанию)
-# ============================================================================
-
 def test_filter_by_description_single_keyword(
-        all_vacancies: List[Vacancy],
-        python_developer: Vacancy,
+    all_vacancies: List[Vacancy],
+    python_developer: Vacancy,
 ) -> None:
     """
     Тест: фильтрация по ключевому слову в описании
@@ -106,15 +94,14 @@ def test_filter_by_description_single_keyword(
     result = filter_vacancies(all_vacancies, ["Python"])
 
     # Проверка: должен найти только Python Developer
-    # (у него "Python" в поле requirement)
     assert len(result) == 1
     assert result[0] == python_developer
 
 
 def test_filter_by_description_multiple_keywords(
-        all_vacancies: List[Vacancy],
-        python_developer: Vacancy,
-        java_developer: Vacancy,
+    all_vacancies: List[Vacancy],
+    python_developer: Vacancy,
+    java_developer: Vacancy,
 ) -> None:
     """
     Тест: фильтрация по нескольким ключевым словам в описании
@@ -131,7 +118,7 @@ def test_filter_by_description_multiple_keywords(
 
 
 def test_filter_by_description_empty_keywords(
-        all_vacancies: List[Vacancy],
+    all_vacancies: List[Vacancy],
 ) -> None:
     """
     Тест: фильтрация без ключевых слов
@@ -146,13 +133,9 @@ def test_filter_by_description_empty_keywords(
     assert len(result) == 4
 
 
-# ============================================================================
-# ТЕСТЫ ДЛЯ ФУНКЦИИ get_vacancies_by_salary (фильтрация по зарплате)
-# ============================================================================
-
 def test_filter_by_salary_from(
-        all_vacancies: List[Vacancy],
-        python_intern: Vacancy,
+    all_vacancies: List[Vacancy],
+    python_intern: Vacancy,
 ) -> None:
     """
     Тест: фильтрация "зарплата ОТ указанной суммы"
@@ -169,12 +152,12 @@ def test_filter_by_salary_from(
     # Frontend Developer: средняя 110000 ✓
     # Стажер: нет зарплаты ✗
     assert len(result) == 3
-    assert python_intern not in result  # Стажера не должно быть
+    assert python_intern not in result
 
 
 def test_filter_by_salary_to(
-        all_vacancies: List[Vacancy],
-        python_intern: Vacancy,
+    all_vacancies: List[Vacancy],
+    python_intern: Vacancy,
 ) -> None:
     """
     Тест: фильтрация "зарплата ДО указанной суммы"
@@ -186,6 +169,7 @@ def test_filter_by_salary_to(
     result = get_vacancies_by_salary(all_vacancies, "до 140000")
 
     assert len(result) == 3  # ✓ Python + Java + Frontend
+
 
 def test_filter_by_salary_empty(all_vacancies: List[Vacancy]) -> None:
     """
@@ -201,16 +185,12 @@ def test_filter_by_salary_empty(all_vacancies: List[Vacancy]) -> None:
     assert len(result) == 4
 
 
-# ============================================================================
-# ТЕСТЫ ДЛЯ СОРТИРОВКИ И ПОЛУЧЕНИЯ ТОП-ВАКАНСИЙ
-# ============================================================================
-
 def test_sort_vacancies_by_salary(
-        all_vacancies: List[Vacancy],
-        java_developer: Vacancy,
-        python_developer: Vacancy,
-        frontend_developer: Vacancy,
-        python_intern: Vacancy,
+    all_vacancies: List[Vacancy],
+    java_developer: Vacancy,
+    python_developer: Vacancy,
+    frontend_developer: Vacancy,
+    python_intern: Vacancy,
 ) -> None:
     """
     Тест: сортировка вакансий по зарплате (от высокой к низкой)
@@ -230,9 +210,9 @@ def test_sort_vacancies_by_salary(
 
 
 def test_get_top_vacancies(
-        all_vacancies: List[Vacancy],
-        java_developer: Vacancy,
-        python_developer: Vacancy,
+    all_vacancies: List[Vacancy],
+    java_developer: Vacancy,
+    python_developer: Vacancy,
 ) -> None:
     """
     Тест: получение топ-N вакансий
@@ -250,7 +230,7 @@ def test_get_top_vacancies(
 
 
 def test_get_top_vacancies_more_than_exists(
-        all_vacancies: List[Vacancy],
+    all_vacancies: List[Vacancy],
 ) -> None:
     """
     Тест: запрос большего количества, чем есть
@@ -279,10 +259,6 @@ def test_get_top_zero_vacancies(all_vacancies: List[Vacancy]) -> None:
     assert len(top_0) == 0
     assert top_0 == []
 
-
-# ============================================================================
-# ТЕСТЫ ДЛЯ ФОРМАТИРОВАНИЯ ВЫВОДА
-# ============================================================================
 
 def test_format_salary() -> None:
     """
@@ -320,8 +296,8 @@ def test_print_vacancies_empty(capsys: pytest.CaptureFixture) -> None:
 
 
 def test_print_vacancies_with_data(
-        python_developer: Vacancy,
-        capsys: pytest.CaptureFixture,
+    python_developer: Vacancy,
+    capsys: pytest.CaptureFixture,
 ) -> None:
     """
     Тест: вывод непустого списка вакансий
@@ -345,10 +321,6 @@ def test_print_vacancies_with_data(
     assert "100 000" in output  # Форматированная зарплата
 
 
-# ============================================================================
-# ТЕСТ ПРОСТОГО ПРИМЕРА (для понимания логики работы)
-# ============================================================================
-
 def test_simple_example() -> None:
     """
     Простой тест-пример для понимания работы функций
@@ -365,7 +337,7 @@ def test_simple_example() -> None:
         requirement="Требуется знание Python",
         responsibility="Разработка на Python",
         schedule="Полный день",
-        url="https://test.com"
+        url="https://test.com",
     )
 
     # 1. Тест фильтрации по профессии (названию)

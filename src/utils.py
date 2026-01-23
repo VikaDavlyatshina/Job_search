@@ -1,6 +1,5 @@
 import re
 from typing import List
-
 from src.vacancy import Vacancy
 
 
@@ -41,7 +40,7 @@ def filter_vacancies_by_profession(vacancies: List[Vacancy], profession_keywords
 
 def filter_vacancies(vacancies: List[Vacancy], filter_words: List[str]) -> List[Vacancy]:
     """
-    Фильтрует вакансии по ключевым словам (ищет ОТДЕЛЬНЫЕ слова)
+    Фильтрует вакансии по ключевым словам (ищет отдельные слова)
     """
     if not filter_words:
         return vacancies
@@ -186,10 +185,11 @@ def sort_vacancies_by_salary(vacancies: List[Vacancy]) -> List[Vacancy]:
             return float(v.salary_to)
 
         # 4. Если нет зарплаты - ставим в самый конец
-        return float('-inf')
+        return float("-inf")
 
     # Сортируем по убыванию зарплаты
     return sorted(vacancies, key=calculate_sort_salary, reverse=True)
+
 
 def get_top_vacancies(vacancies: List[Vacancy], top_n: int) -> List[Vacancy]:
     """
