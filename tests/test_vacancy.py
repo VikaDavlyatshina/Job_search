@@ -1,14 +1,15 @@
 import pytest
+from typing import Tuple, Dict, Any, Callable
 from src.vacancy import Vacancy
 
-def test_developer_salary(developer_vacancy):
+def test_developer_salary(developer_vacancy: Vacancy) -> None:
     """Тест вакансии разработчика"""
     vacancy = developer_vacancy
     assert vacancy.name == "Python Developer"
     assert vacancy.get_estimated_salary() == 125000  # (100k + 150k) / 2
 
 
-def test_custom_vacancy(make_vacancy):
+def test_custom_vacancy(make_vacancy: Callable[..., Vacancy]) -> None:
     """Тест создания своей вакансии"""
     my_vacancy = make_vacancy(
         name="Data Scientist",
@@ -21,7 +22,7 @@ def test_custom_vacancy(make_vacancy):
     assert my_vacancy.area == "Санкт-Петербург"
 
 
-def test_junior_vs_senior(junior_and_senior):
+def test_junior_vs_senior(junior_and_senior: Tuple[Vacancy, Vacancy]) -> None:
     """Тест сравнения зарплат"""
     junior, senior = junior_and_senior
 
@@ -34,7 +35,7 @@ def test_junior_vs_senior(junior_and_senior):
     (120000, None, 120000),
     (None, 180000, 180000),
 ])
-def test_salary_calculation(make_vacancy, salary_from, salary_to, expected):
+def test_salary_calculation(make_vacancy: Callable[..., Vacancy], salary_from: int | None, salary_to: int | None, expected: int) -> None:
     """Параметризованный тест зарплаты"""
     vacancy = make_vacancy(
         name="Тест",
@@ -45,7 +46,7 @@ def test_salary_calculation(make_vacancy, salary_from, salary_to, expected):
     assert vacancy.get_estimated_salary() == expected
 
 
-def test_from_api(api_vacancy_with_salary, api_vacancy_no_salary):
+def test_from_api(api_vacancy_with_salary: Dict[str, Any], api_vacancy_no_salary: Dict[str, Any]) -> None:
     """Тест преобразования данных API"""
     # Тест с зарплатой
     vacancy1 = Vacancy.from_vacancy_hh(api_vacancy_with_salary)

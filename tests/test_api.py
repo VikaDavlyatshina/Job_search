@@ -3,7 +3,7 @@ from unittest.mock import patch, Mock
 from src.api import HeadHunterAPI
 
 
-def test_basic_api_works(mock_session):
+def test_basic_api_works(mock_session: Mock) -> None:
     """Базовый тест проверки подключения к API"""
     with patch('src.api.requests.Session') as mock_session_class:
         mock_session_class.return_value = mock_session
@@ -16,7 +16,7 @@ def test_basic_api_works(mock_session):
         assert result[1]["name"] == "Java Developer"
 
 
-def test_empty_response():
+def test_empty_response() -> None:
     """Тестирование пустого ответа от API"""
 
     mock_response = Mock()
@@ -38,7 +38,7 @@ def test_empty_response():
         assert len(result) == 0
 
 
-def test_validation_errors():
+def test_validation_errors() -> None:
     """Тестирование ошибки валидации"""
     api = HeadHunterAPI()
 
@@ -61,7 +61,7 @@ def test_validation_errors():
     assert "положительным" in error_msg
 
 
-def test_search_with_city(mock_session):
+def test_search_with_city(mock_session: Mock) -> None:
     """Поиск вакансий в конкретном городе"""
     with patch('src.api.requests.Session') as mock_session_class:
         mock_session_class.return_value = mock_session
@@ -76,7 +76,7 @@ def test_search_with_city(mock_session):
             assert len(result) == 2  # Используем mock данные
 
 
-def test_network_error_handling():
+def test_network_error_handling() -> None:
     """Проверяем, как код обрабатывает ошибки сети"""
 
     mock_session = Mock()
@@ -92,7 +92,7 @@ def test_network_error_handling():
         assert result == []
 
 
-def test_multiple_pages():
+def test_multiple_pages() -> None:
     """Тест получения нескольких страниц"""
 
     # Создаем данные для двух страниц
@@ -137,7 +137,7 @@ def test_multiple_pages():
         assert len(result) == 150
 
 
-def test_api_parameters(mock_session):
+def test_api_parameters(mock_session: Mock) -> None:
     """Проверка правильности параметров запроса"""
     with patch('src.api.requests.Session') as mock_session_class:
         mock_session_class.return_value = mock_session

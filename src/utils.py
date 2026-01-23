@@ -165,29 +165,31 @@ def get_vacancies_by_salary(vacancies: List[Vacancy], salary_range: str) -> List
 
 def sort_vacancies_by_salary(vacancies: List[Vacancy]) -> List[Vacancy]:
     """
-    Сортирует вакансии по убыванию зарплаты.
-    Сначала идут вакансии с самой высокой МАКСИМАЛЬНОЙ зарплатой.
+    Сортирует вакансии по зарплате от высокой к низкой.
+    Простая и понятная реализация.
     """
     if not vacancies:
         return []
 
-    # Создаём функцию для вычисления зарплаты для сортировки
-    def get_salary_for_sort(vacancy: Vacancy) -> int:
-        # Берём МАКСИМАЛЬНУЮ зарплату (salary_to)
-        if vacancy.salary_to is not None:
-            return vacancy.salary_to
-        # Если нет "до", берём "от"
-        elif vacancy.salary_from is not None:
-            return vacancy.salary_from
-        # Если зарплаты нет совсем
-        else:
-            return 0
+    # Функция для вычисления зарплаты для сортировки
+    def calculate_sort_salary(v: Vacancy) -> float:
+        # 1. Если есть обе границы - берем среднюю
+        if v.salary_from is not None and v.salary_to is not None:
+            return (v.salary_from + v.salary_to) / 2.0
+
+        # 2. Если только "от" - берем её
+        if v.salary_from is not None:
+            return float(v.salary_from)
+
+        # 3. Если только "до" - берем её
+        if v.salary_to is not None:
+            return float(v.salary_to)
+
+        # 4. Если нет зарплаты - ставим в самый конец
+        return float('-inf')
 
     # Сортируем по убыванию зарплаты
-    sorted_list = sorted(vacancies, key=get_salary_for_sort, reverse=True)  # По убыванию (от большего к меньшему)
-
-    return sorted_list
-
+    return sorted(vacancies, key=calculate_sort_salary, reverse=True)
 
 def get_top_vacancies(vacancies: List[Vacancy], top_n: int) -> List[Vacancy]:
     """
@@ -265,7 +267,7 @@ def print_vacancies(vacancies: List[Vacancy]) -> None:
     print("=" * 60)
 
 
-def format_salary(salary: int) -> str:
+def format_salary(salary: int | None) -> str:
     """
     Форматирует зарплату для красивого вывода.
     Пример: 100000 -> "100 000 руб."

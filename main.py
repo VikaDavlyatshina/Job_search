@@ -6,7 +6,7 @@ from src.utils import filter_vacancies_by_profession, filter_vacancies, get_vaca
 
 
 # Вспомогательные функции (остаются как у тебя)
-def show_saved_vacancies(saver: JSONSaver):
+def show_saved_vacancies(saver: JSONSaver) -> None:
     """Показывает сохранённые вакансии"""
     saved = saver.get_vacancies()
 
@@ -37,7 +37,7 @@ def show_saved_vacancies(saver: JSONSaver):
     input("\nНажмите Enter чтобы продолжить...")
 
 
-def delete_vacancy_menu(saver: JSONSaver):
+def delete_vacancy_menu(saver: JSONSaver) -> None:
     """Меню удаления вакансии"""
     saved = saver.get_vacancies()
 
@@ -65,7 +65,7 @@ def delete_vacancy_menu(saver: JSONSaver):
         print("❌ Введите число")
 
 
-def clear_file_menu(saver: JSONSaver):
+def clear_file_menu(saver: JSONSaver) -> None:
     """Меню очистки файла"""
     confirm = input("⚠️  ВЫ УВЕРЕНЫ? Все вакансии будут удалены! (да/нет): ").strip().lower()
     if confirm in ["да", "д", "yes", "y"]:
