@@ -1,6 +1,7 @@
-from abc import ABC, abstractmethod   # ABC - для создания абстрактных классов
-from typing import List, Dict, Optional
-import time    # Для добавления пауз между запросами
+import time  # Для добавления пауз между запросами
+from abc import ABC, abstractmethod  # ABC - для создания абстрактных классов
+from typing import Any, Dict, List, Optional, Union
+
 import requests  # Библиотека для HTTP-запросов к API
 
 
@@ -53,40 +54,30 @@ class HeadHunterAPI(BaseVacancyApi):
         self.__areas_url = "https://api.hh.ru/suggests/areas"
 
         # Сессия для HTTP-запросов - пока None, создадим в _connect()
-        self.__session = None
+        self.__session: Optional[requests.Session] = None
 
         # Сразу устанавливаем соединение при создании объекта
         self._connect()
 
     def _connect(self) -> None:
-       """
-       Устанавливает соединение с API hh.ru
-       Создаёт и настраивает HTTP-сессию, проверяет доступность API.
-       """
+        """
+        Устанавливает соединение с API hh.ru
+        Создаёт и настраивает HTTP-сессию, проверяет доступность API.
+        """
 
-       # Если сессия уже создана - ничего не делаем
-       if self.__session is None:
-           # Создаём новую сессию
-           self.__session = requests.Session()
+        if self.__session is None:
+            self.__session = requests.Session()
 
-           try:
-               # Тестовый запрос для проверки доступности API
-               # Параметры: text='test' (любой запрос), per_page=1 (минимум данных)
-               response = self.__session.get(
-                   self.__base_url,
-                   params={'text': 'test', 'per_page': 1},
-                   timeout=10
-               )
-               # Проверяем статус ответа
-               response.raise_for_status()
+            try:
+                if self.__session:
+                    params: Dict[str, Union[str, int]] = {"text": "test", "per_page": 1}
 
-               print("✅ Соединение с hh.ru установлено")
+                    response = self.__session.get(self.__base_url, params=params, timeout=10)
+                    response.raise_for_status()
+                    print("✅ Соединение с hh.ru установлено")
 
-           except Exception as e:
-               # Если ошибка - выводим предупреждение, но не падаем
-               print(f"Внимание: {e}")
-
-
+            except Exception as e:
+                print(f"Внимание: {e}")
 
     def _find_city_id(self, city_name: str) -> Optional[int]:
         """
@@ -101,22 +92,27 @@ class HeadHunterAPI(BaseVacancyApi):
         if not city_name:
             return None
 
+        if self.__session is None:
+            return None
+
         try:
-            response = self.__session.get(
-                self.__areas_url,
-                params={'text': city_name},
-                timeout=5
-            )
+            response = self.__session.get(self.__areas_url, params={"text": city_name}, timeout=5)
+
+            if response is None:
+                return None
 
             # Парсим JSON-ответ
             data = response.json()
+
+            if data is None:
+                return None
 
             # Берём первый результат
             items = data.get("items")
             if items and len(items) > 0:
                 city_id = items[0].get("id")
                 if city_id:
-                    return int(city_id)      # Конвертируем строку в число
+                    return int(city_id)  # Конвертируем строку в число
 
         except Exception as e:
             # Если ошибка (нет интернета, API не отвечает и т.д.)
@@ -124,10 +120,7 @@ class HeadHunterAPI(BaseVacancyApi):
 
         return None
 
-
-
-    def get_vacancies(self, keyword: str, **kwargs) -> List[Dict]:
-
+    def get_vacancies(self, keyword: str, **kwargs: Any) -> List[Dict]:
         """
         Получает вакансию по ключевому слову и городу
 
@@ -147,12 +140,12 @@ class HeadHunterAPI(BaseVacancyApi):
         """
 
         # Извлекаем параметры из kwargs
-        max_pages = kwargs.get('max_pages', 5)
-        city = kwargs.get('city', None)
+        max_pages = kwargs.get("max_pages", 5)
+        city = kwargs.get("city", None)
 
         # Проверяем, что keyword - непустая строка
         if not keyword or not isinstance(keyword, str):
-            raise ValueError("Ключевое слово должно быть непустой строкой")
+            raise ValueError("Ключевое слово не может быть пустым")
 
         # 1. Валидация входных данных
 
@@ -172,15 +165,17 @@ class HeadHunterAPI(BaseVacancyApi):
         # Если по какой-то причине сессия не создана - создаём
         if self.__session is None:
             self._connect()
+            if self.__session is None:
+                print("Не удалось установить соединение с API")
+                return []
 
         # 3. Определяем, где ищем (город или вся Россия)
 
-        area_id = 113  #  По умолчанию - вся Россия
+        area_id = 113  # По умолчанию - вся Россия
 
         if city:
             # Пытаемся найти ID города
             found_id = self._find_city_id(city)
-
 
             if found_id:
                 # Город найден, используем его ID
@@ -199,8 +194,6 @@ class HeadHunterAPI(BaseVacancyApi):
         # Здесь будем накапливать все найденные вакансии
         all_vacancies = []
 
-
-
         for page in range(max_pages):
             """
             Цикл по страницам:
@@ -210,21 +203,20 @@ class HeadHunterAPI(BaseVacancyApi):
             """
 
             try:
+                if self.__session is None:
+                    print(f"Сессия потеряна на странице {page + 1}")
+                    break
                 # Параметры запроса для текущей страницы
-                params = {
-                    "text": keyword,    # Что ищем
-                    "area": area_id,    # Где ищем
-                    "page": page,       # Номер страницы
-                    "per_page": 100,    # Максимум на странице
+                params: Dict[str, Union[str, int, bool, None]] = {
+                    "text": keyword,  # Что ищем
+                    "area": area_id,  # Где ищем
+                    "page": page,  # Номер страницы
+                    "per_page": 100,  # Максимум на странице
                     "only_with_salary": False,  # Включая вакансии без зарплаты
                 }
 
                 # Выполняем HTTP GET запрос
-                response = self.__session.get(
-                    self.__base_url,
-                    params=params,
-                    timeout=15
-                )
+                response = self.__session.get(self.__base_url, params=params, timeout=15)
 
                 # Проверяем статус ответа (выбрасывает исключение при ошибке)
                 response.raise_for_status()
@@ -233,32 +225,33 @@ class HeadHunterAPI(BaseVacancyApi):
                 data = response.json()
 
                 # Извлекаем список вакансий с текущей страницы
-                page_vacancies = data.get("items", [])   # [] - значение по умолчанию
+                if data and isinstance(data, dict):
+                    page_vacancies = data.get("items", [])
+                else:
+                    page_vacancies = []
 
                 # Добавляем вакансии в общий список
                 all_vacancies.extend(page_vacancies)
 
                 # Проверка пагинации
 
-                # 1. Если вакансий меньше 100 → это последняя страница
-                if len(page_vacancies) < 100:
-                    break    # Выходим из цикла
-
-                # 2. Альтернативная проверка: используем данные от API
-                pages_found = data.get("pages", 0)      # Общее количество страниц
-                if page >= pages_found - 1:            # Если текущая страница последняя
+                # 1. Сначала проверяем по данным API (главная проверка)
+                pages_found = data.get("pages", 0)  # Общее количество страниц
+                if page >= pages_found - 1:  # Если текущая страница последняя
                     break
 
-                # Добавляем паузы между запросами
+                # 2. Проверяем, есть ли вакансии на странице
+                if len(page_vacancies) == 0:  # Если страница пустая
+                    break  # Выходим из цикла
+
+                # 3. Пауза между запросами (только если НЕ вышли через break!)
                 if page < max_pages - 1:
                     time.sleep(0.1)
-
             except requests.RequestException as e:
                 print(f"Ошибка при загрузке страницы {page + 1}: {e}")
                 continue
+            except Exception as e:
+                print(f"Неожиданная ошибка при загрузке страницы {page + 1}: {e}")
+                continue
 
         return all_vacancies
-
-
-
-

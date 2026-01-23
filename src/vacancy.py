@@ -1,12 +1,11 @@
-from typing import Dict, Any, List
 import re
-
+from typing import Any, Dict, List
 
 
 class Vacancy:
     """Класс для представления Вакансии"""
 
-     # Список разрешенных атрибутов (для экономии памяти)
+    # Список разрешенных атрибутов (для экономии памяти)
     __slots__ = ("name", "area", "salary_from", "salary_to", "requirement", "responsibility", "schedule", "url")
 
     @staticmethod
@@ -20,37 +19,37 @@ class Vacancy:
         Returns:
             Очищенный текст
         """
-        return re.sub(r'<[^>]+>', '', text)
+        return re.sub(r"<[^>]+>", "", text)
 
     # Инициализация
     def __init__(
-            self,
-            name: str,
-            area: str| None,
-            salary_from: int | None,
-            salary_to: int | None,
-            requirement: str | None,
-            responsibility: str| None,
-            schedule: str| None,
-            url: str
+        self,
+        name: str | None,
+        area: str | None,
+        salary_from: int | None,
+        salary_to: int | None,
+        requirement: str | None,
+        responsibility: str | None,
+        schedule: str | None,
+        url: str | None,
     ):
-        self.name = self.__validate_name(name)                 # Название вакансии
-        self.area = area or "Не указано"                      # Город
+        self.name = self.__validate_name(name)  # Название вакансии
+        self.area = area or "Не указано"  # Город
 
         # Используем валидацию для зарплаты
-        self.salary_from = self.__validate_salary(salary_from)   # Зарплата от
-        self.salary_to = self.__validate_salary(salary_to)       # Зарплата до
+        self.salary_from = self.__validate_salary(salary_from)  # Зарплата от
+        self.salary_to = self.__validate_salary(salary_to)  # Зарплата до
 
         # Очищаем HTML из текстовых полей
-        self.requirement = self.__clean_html(requirement) if requirement else "Не указано"         # Требования
-        self.responsibility = self.__clean_html(responsibility) if responsibility else "Не указано"   # Обязанности
-        self.schedule = schedule or "Не указано"                # График работы
-        self.url = self.__validate_url(url)                     # Ссылка на вакансию
+        self.requirement = self.__clean_html(requirement) if requirement else "Не указано"  # Требования
+        self.responsibility = self.__clean_html(responsibility) if responsibility else "Не указано"  # Обязанности
+        self.schedule = schedule or "Не указано"  # График работы
+        self.url = self.__validate_url(url)  # Ссылка на вакансию
 
     # Валидация данных
 
     @staticmethod
-    def __validate_name(name: str) -> str:
+    def __validate_name(name: str | None) -> str:
         """
         Валидации названия вакансии.
 
@@ -66,7 +65,7 @@ class Vacancy:
         return name
 
     @staticmethod
-    def __validate_salary(salary: int|float|None) -> int|None:
+    def __validate_salary(salary: int | float | None) -> int | None:
         """
         Валидация зарплаты.
 
@@ -89,13 +88,13 @@ class Vacancy:
             return None
 
         # 4. Проверяем диапазон
-        if salary_int < 0:   # Отрицательная зарплата
+        if salary_int < 0:  # Отрицательная зарплата
             return None
 
         return salary_int
 
     @staticmethod
-    def __validate_url(url: str|None) -> str:
+    def __validate_url(url: str | None) -> str:
         """
         Валидация ссылки на вакансию.
         :param url:
@@ -112,8 +111,7 @@ class Vacancy:
             raise ValueError(f"Некорректная ссылка: {url}")
         return url
 
-
-    def get_estimated_salary(self) -> int| None:
+    def get_estimated_salary(self) -> int | None:
         """
         Возращает предполагаемую зарплату
         1. Если обе границы None → None
@@ -122,18 +120,17 @@ class Vacancy:
         4. Если обе → среднее арифметическое
         """
 
-        if  self.salary_from is None and self.salary_to is None:
+        if self.salary_from is None and self.salary_to is None:
             return None
 
         elif self.salary_from is None:
             return self.salary_to
 
         elif self.salary_to is None:
-           return self.salary_from
+            return self.salary_from
 
         else:
-           return (self.salary_from + self.salary_to) // 2
-
+            return (self.salary_from + self.salary_to) // 2
 
     # Методы сравнения
     def __lt__(self, other: "Vacancy") -> bool:
@@ -157,8 +154,6 @@ class Vacancy:
 
         return self_salary < other_salary
 
-
-
     def __gt__(self, other: "Vacancy") -> bool:
         """
         Сравнение вакансий (больше чем) по предполагаемой зарплате.
@@ -179,8 +174,7 @@ class Vacancy:
 
         return self_salary > other_salary
 
-
-    def __eq__(self, other: "Vacancy") -> bool:
+    def __eq__(self, other: object) -> bool:
         """
         Проверка равенства вакансий по предполагаемой зарплате.
 
@@ -193,7 +187,6 @@ class Vacancy:
         if not isinstance(other, Vacancy):
             return NotImplemented
 
-
         self_salary = self.get_estimated_salary()
         other_salary = other.get_estimated_salary()
 
@@ -204,7 +197,7 @@ class Vacancy:
 
         return self_salary == other_salary
 
-    def __le__(self, other: "Vacancy") -> bool:
+    def __le__(self, other: object) -> bool:
         """
         Меньше или равно (<=) по зарплате
 
@@ -254,7 +247,6 @@ class Vacancy:
 
         return f"Вакансия: {self.name}\nГород: {self.area}\nЗарплата: {salary_info}"
 
-
     def to_dict(self) -> Dict[str, Any]:
         """
         Преобразует объект Vacancy в словарь для сохранения в JSON
@@ -263,16 +255,15 @@ class Vacancy:
         """
 
         return {
-             "name": self.name,
-             "area": self.area,
-             "salary_from": self.salary_from if self.salary_from is not None else "Не указано",
-             "salary_to": self.salary_to if self.salary_to is not None else "Не указано",
-             "requirement": self.requirement,
-             "responsibility": self.responsibility,
-             "schedule": self.schedule,
-             "url": self.url
-         }
-
+            "name": self.name,
+            "area": self.area,
+            "salary_from": self.salary_from if self.salary_from is not None else "Не указано",
+            "salary_to": self.salary_to if self.salary_to is not None else "Не указано",
+            "requirement": self.requirement,
+            "responsibility": self.responsibility,
+            "schedule": self.schedule,
+            "url": self.url,
+        }
 
     @classmethod
     def from_vacancy_hh(cls, hh_data: dict) -> "Vacancy":
@@ -294,8 +285,8 @@ class Vacancy:
         return cls(
             name=hh_data.get("name"),
             area=hh_data.get("area", {}).get("name"),
-            salary_from = salary_from,  # Может быть None
-            salary_to = salary_to,      # Может быть None
+            salary_from=salary_from,  # Может быть None
+            salary_to=salary_to,  # Может быть None
             requirement=hh_data.get("snippet", {}).get("requirement"),
             responsibility=hh_data.get("snippet", {}).get("responsibility"),
             schedule=hh_data.get("schedule", {}).get("name"),
@@ -327,4 +318,3 @@ class Vacancy:
                 continue
 
         return vacancies
-

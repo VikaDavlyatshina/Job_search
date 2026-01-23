@@ -1,6 +1,8 @@
-from src.api import HeadHunterAPI
-from src.utils import *
 from typing import List
+from src.api import HeadHunterAPI
+from src.storage import JSONSaver
+from src.vacancy import Vacancy
+from src.utils import filter_vacancies_by_profession, filter_vacancies, get_vacancies_by_salary,get_top_vacancies, print_vacancies
 
 
 # Вспомогательные функции (остаются как у тебя)
@@ -66,7 +68,7 @@ def delete_vacancy_menu(saver: JSONSaver):
 def clear_file_menu(saver: JSONSaver):
     """Меню очистки файла"""
     confirm = input("⚠️  ВЫ УВЕРЕНЫ? Все вакансии будут удалены! (да/нет): ").strip().lower()
-    if confirm in ['да', 'д', 'yes', 'y']:
+    if confirm in ["да", "д", "yes", "y"]:
         saver.clear_all()
         print("✅ Файл очищен")
     else:
@@ -81,11 +83,18 @@ def perform_hh_search(api: HeadHunterAPI) -> List[Vacancy]:
 
     # 1. Получаем поисковый запрос
     search_query = input("Введите поисковый запрос (например: 'Python разработчик'): ").strip()
+
+    print(f"\n🔎 БУДЕТ ИСКАТЬ: '{search_query}'")
+    confirm = input("Верно? (Enter=да, 'нет'=изменить): ").strip().lower()
+
+    if confirm in ["нет", "н", "no", "n", "изменить", "change"]:
+        search_query = input("Введите правильный запрос: ").strip()
+
     if not search_query:
         print("❌ Поисковый запрос не может быть пустым!")
         return []
 
-    # 2. Город
+    # 2. ГОРОД
     print("\n🏙️  ВЫБОР ГОРОДА")
     city = input("Введите город (или Enter для поиска по России): ").strip()
 
@@ -107,11 +116,7 @@ def perform_hh_search(api: HeadHunterAPI) -> List[Vacancy]:
     # 4. Получаем вакансии через API
     print(f"\n📡 Ищем вакансии по запросу: '{search_query}'...")
     try:
-        hh_vacancies_data = api.get_vacancies(
-            keyword=search_query,
-            max_pages=max_pages,
-            city=city if city else None
-        )
+        hh_vacancies_data = api.get_vacancies(keyword=search_query, max_pages=max_pages, city=city if city else None)
         vacancies_list = Vacancy.cast_to_object_list(hh_vacancies_data)
 
         if not vacancies_list:
@@ -124,30 +129,55 @@ def perform_hh_search(api: HeadHunterAPI) -> List[Vacancy]:
         print(f"❌ Ошибка при получении вакансий: {e}")
         return []
 
-    # 5. Фильтрация по ключевым словам
-    print("\n🔍 ФИЛЬТРАЦИЯ ПО КЛЮЧЕВЫМ СЛОВАМ В ОПИСАНИИ")
-    filter_input = input(
-        "Введите ключевые слова для поиска в описании через запятую (или Enter чтобы пропустить): ").strip()
+    # 5. Фильтрация по профессии (по названию вакансии)
+    print("\n👔 ФИЛЬТРАЦИЯ ПО ПРОФЕССИИ")
+    print("   Оставить только вакансии с определенным названием")
+    print("   Примеры: 'бариста', 'бармен', 'официант'")
+    print("   Или оставьте пустым для поиска всех профессий")
 
-    filter_words = []
+    profession_input = input("Ключевые слова в названии вакансии (через запятую): ").strip()
+
+    if profession_input:
+        profession_keywords = [word.strip() for word in profession_input.split(",") if word.strip()]
+        print(f"🔍 Ищем в названии: {profession_keywords}")
+
+        vacancies_list = filter_vacancies_by_profession(vacancies_list, profession_keywords)
+
+        if not vacancies_list:
+            print("📭 После фильтрации по названию вакансий не осталось.")
+            return []
+
+        print(f"✅ После фильтрации по названию: {len(vacancies_list)}")
+    else:
+        print("⏭️  Пропускаем фильтрацию по профессии")
+
+    # 6. ФИЛЬТРАЦИЯ ПО ТЕХНОЛОГИЯМ/НАВЫКАМ (в описании)
+    print("\n🔧 ФИЛЬТРАЦИЯ ПО ТЕХНОЛОГИЯМ И НАВЫКАМ")
+    print("   Оставить вакансии, где есть эти слова в описании")
+    print("   Примеры: 'опыт', 'обучение', 'Django', 'Flask'")
+
+    filter_input = input("Ключевые слова в описании (через запятую, Enter чтобы пропустить): ").strip()
+
     if filter_input:
         filter_words = [word.strip() for word in filter_input.split(",") if word.strip()]
-        print(f"🔑 Ключевые слова: {filter_words}")
+        print(f"🔑 Ищем в описании: {filter_words}")
 
-    filtered_vacancies = filter_vacancies(vacancies_list, filter_words)
+        vacancies_list = filter_vacancies(vacancies_list, filter_words)
 
-    if not filtered_vacancies:
-        print("📭 После фильтрации по ключевым словам вакансий не осталось.")
-        return []
+        if not vacancies_list:
+            print("📭 После фильтрации по описанию вакансий не осталось.")
+            return []
 
-    print(f"✅ После фильтрации осталось: {len(filtered_vacancies)}")
+        print(f"✅ После фильтрации по описанию: {len(vacancies_list)}")
+    else:
+        print("⏭️  Пропускаем фильтрацию по описанию")
 
-    # 6. Фильтрация по зарплате
+    # 7. Фильтрация по зарплате
     print("\n💰 ФИЛЬТРАЦИЯ ПО ЗАРПЛАТЕ")
     print("   Форматы: '100000', '100000-150000', 'от 100000', 'до 150000'")
     salary_range = input("Введите диапазон зарплат (или Enter чтобы пропустить): ").strip()
 
-    ranged_vacancies = get_vacancies_by_salary(filtered_vacancies, salary_range)
+    ranged_vacancies = get_vacancies_by_salary(vacancies_list, salary_range)
 
     if not ranged_vacancies:
         print("📭 После фильтрации по зарплате вакансий не осталось.")
@@ -155,16 +185,24 @@ def perform_hh_search(api: HeadHunterAPI) -> List[Vacancy]:
 
     print(f"✅ После фильтрации по зарплате: {len(ranged_vacancies)}")
 
-    # 7. Сортировка и выбор топ-N
+    # 8. Сортировка и выбор Топ-вакансий
     print("\n🏆 СОРТИРОВКА И ВЫБОР ТОП-ВАКАНСИЙ")
+
+    # Автоматически определяем лимит
+    auto_limit = min(10, len(ranged_vacancies))
 
     while True:
         try:
-            top_n_input = input("Сколько топ-вакансий показать? (Enter для всех): ").strip()
+            top_n_input = input(f"Сколько топ-вакансий показать? (Enter для {auto_limit}): ").strip()
 
             if not top_n_input:
-                top_n = len(ranged_vacancies)
-                print("📊 Показываю все вакансии:")
+                # Автоматический топ-10 (или меньше, если вакансий меньше)
+                top_n = auto_limit
+
+                if len(ranged_vacancies) > top_n:
+                    print(f"📊 Показываю топ-{top_n} из {len(ranged_vacancies)} вакансий:")
+                else:
+                    print(f"📊 Показываю все {len(ranged_vacancies)} вакансий:")
                 break
 
             top_n = int(top_n_input)
@@ -172,15 +210,21 @@ def perform_hh_search(api: HeadHunterAPI) -> List[Vacancy]:
                 print("❌ Число должно быть больше 0. Попробуйте снова.")
                 continue
 
-            print(f"📊 Показываю топ-{top_n} вакансий:")
+            # Ограничиваем максимумом доступных вакансий
+            if top_n > len(ranged_vacancies):
+                top_n = len(ranged_vacancies)
+                print(f"⚠️  Показываю все {top_n} вакансий (вы запросили больше чем есть)")
+            else:
+                print(f"📊 Показываю топ-{top_n} вакансий:")
             break
 
         except ValueError:
             print("❌ Пожалуйста, введите число или нажмите Enter.")
 
+    # 9. Получаем топ-вакансии (сортировка + выбор N)
     top_vacancies = get_top_vacancies(ranged_vacancies, top_n)
 
-    # 8. Вывод результатов
+    # 10. Вывод результатов
     print_vacancies(top_vacancies)
 
     return top_vacancies
@@ -198,14 +242,17 @@ def user_interaction() -> None:
 
     print(f"\n💾 Все вакансии будут сохраняться в файл: {json_saver.filename}")
 
+    # Добавим пояснения для пользователя
+    print("\n💡 СОВЕТЫ ПО ПОИСКУ:")
+    print("1. Поисковый запрос - основной поиск на сайте hh.ru")
+    print("2. Фильтр по профессии - поиск по названию вакансии")
+    print("3. Фильтр по навыкам - поиск по описанию вакансии")
+    print("=" * 50)
+
     while True:
         print("\n" + "═" * 50)
         print("📋 ГЛАВНОЕ МЕНЮ")
         print("═" * 50)
-
-        # Показываем статистику
-        saved_count = len(json_saver.get_vacancies())
-        print(f"💾 В файле сохранено: {saved_count} вакансий")
 
         print("\n1. 🔍 НОВЫЙ ПОИСК ВАКАНСИЙ")
         print("2. 📋 ПОКАЗАТЬ СОХРАНЁННЫЕ ВАКАНСИИ")
@@ -214,6 +261,28 @@ def user_interaction() -> None:
         print("5. 👋 ВЫЙТИ")
 
         choice = input("\n👉 Ваш выбор (1-5): ").strip()
+
+        # Проверка на пустой ввод
+        if not choice:
+            print("⚠️  Пожалуйста, введите число от 1 до 5")
+            continue  # Начинаем цикл заново
+
+        # Проверка на число
+        if not choice.isdigit():
+            print(f"❌ '{choice}' - это не число! Введите цифру от 1 до 5.")
+            continue
+
+        # Преобразуем в число
+        try:
+            choice_num = int(choice)
+        except ValueError:
+            print(f"❌ Не могу преобразовать '{choice}' в число")
+            continue
+
+        # Проверка диапазона
+        if choice_num < 1 or choice_num > 5:
+            print(f"❌ Число {choice_num} не в диапазоне 1-5")
+            continue
 
         if choice == "1":
             # ВЫБОР ПЛАТФОРМЫ ДЛЯ ПОИСКА
@@ -234,11 +303,15 @@ def user_interaction() -> None:
                 found_vacancies = perform_hh_search(hh_api)
 
                 if found_vacancies:
-                    # Предлагаем сохранить
-                    print("\n💾 СОХРАНЕНИЕ РЕЗУЛЬТАТОВ")
-                    save_choice = input("Сохранить найденные вакансии? (да/нет): ").strip().lower()
+                    # Автоматически предлагаем сохранить, если больше 5 вакансий
+                    if len(found_vacancies) > 5:
+                        print(f"\n💾 НАЙДЕНО ВАКАНСИЙ: {len(found_vacancies)}")
+                        save_choice = input("Сохранить найденные вакансии в файл? (да/нет): ").strip().lower()
+                    else:
+                        print(f"\n💾 НАЙДЕНО ВАКАНСИЙ: {len(found_vacancies)}")
+                        save_choice = input("Сохранить найденные вакансии? (да/нет): ").strip().lower()
 
-                    if save_choice in ['да', 'д', 'yes', 'y']:
+                    if save_choice in ["да", "д", "yes", "y"]:
                         saved_count = 0
                         already_existed = 0
 
@@ -253,6 +326,8 @@ def user_interaction() -> None:
                         if already_existed > 0:
                             print(f"📌 Уже было в файле: {already_existed}")
                         print(f"💾 Файл: {json_saver.filename}")
+                    else:
+                        print("⏭️  Вакансии не сохранены")
 
                 input("\nНажмите Enter чтобы вернуться в меню...")
 
@@ -286,36 +361,3 @@ def user_interaction() -> None:
 # Запускаем программу
 if __name__ == "__main__":
     user_interaction()
-
-
-
-# 1. Спросить у пользователя:
-#    - Что искать? (search_query)
-#    - Сколько показать? (top_n)
-#    - Какие ключевые слова? (filter_words)
-#    - Какой диапазон зарплат? (salary_range)
-
-# 2. Использовать твои классы:
-#    api = HeadHunterAPI()
-#    raw_data = api.get_vacancies(search_query)
-
-# 3. Преобразовать данные:
-#    vacancies = Vacancy.cast_to_object_list(raw_data)
-
-# 4. Применить фильтры (твои функции):
-#    filtered = filter_vacancies(vacancies, filter_words)
-#    filtered_by_salary = get_vacancies_by_salary(filtered, salary_range)
-
-# 5. Отсортировать:
-#    sorted_vac = sort_vacancies(filtered_by_salary)
-
-# 6. Взять топ-N:
-#    top = get_top_vacancies(sorted_vac, top_n)
-
-# 7. Показать:
-#    print_vacancies(top)
-
-# 8. Сохранить (опционально):
-#    saver = JSONSaver()
-#    for vacancy in top:
-#        saver.add_vacancy(vacancy)

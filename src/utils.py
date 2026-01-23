@@ -1,147 +1,165 @@
+import re
 from typing import List
+
 from src.vacancy import Vacancy
-from src.storage import JSONSaver
 
-def filter_vacancies(vacancies: List[Vacancy], filter_words: List[str]) -> List[Vacancy]:
+
+def filter_vacancies_by_profession(vacancies: List[Vacancy], profession_keywords: List[str]) -> List[Vacancy]:
     """
-    Фильтрует вакансии по ключевым словам
+    Фильтрует вакансии по ключевым словам в Названии вакансии
 
-    :param vacancies:
-           Список вакансий для фильтрации
-    :param filter_words:
-        Список ключевых слов для поиска в описании вакансии
-    :return:
-          Отфильтрованный список
+    Используется для поиска конкретной профессии
+
+    Args:
+        vacancies: Список вакансий
+        profession_keywords: Ключевые слова для поиска в названии
+
+    Returns:
+        Отфильтрованный список
     """
-
-    # Если нет ключевых слов - возвращаем все вакансии
-    if not filter_words:
+    if not profession_keywords:
         return vacancies
 
-    # Пустой список для хранения
     filtered = []
 
     for vacancy in vacancies:
+        vacancy_name = vacancy.name.lower()
 
-        description = (vacancy.requirement or "").lower()
+        for keyword in profession_keywords:
+            keyword_lower = keyword.lower().strip()
 
-        # Проверяем каждое ключевое слово
+            if not keyword_lower:
+                continue
+
+            # Ищем точное слово в названии
+            if keyword_lower in vacancy_name:
+                filtered.append(vacancy)
+                break
+
+    return filtered
+
+
+def filter_vacancies(vacancies: List[Vacancy], filter_words: List[str]) -> List[Vacancy]:
+    """
+    Фильтрует вакансии по ключевым словам (ищет ОТДЕЛЬНЫЕ слова)
+    """
+    if not filter_words:
+        return vacancies
+
+    filtered = []
+
+    for vacancy in vacancies:
+        description = f"{vacancy.requirement or ''} {vacancy.responsibility or ''}".lower()
+
+        # Извлекаем только слова (без знаков препинания)
+        words = re.findall(r"\b\w+\b", description)
+        word_set = set(words)
+
         for keyword in filter_words:
             keyword_lower = keyword.lower().strip()
 
             if not keyword_lower:
                 continue
 
-            # Если ключевое слово найдено в описании
-            if keyword_lower in description:
+            # Ищем слово целиком
+            if keyword_lower in word_set:
                 filtered.append(vacancy)
-                break  # Достаточно одного совпадения
+                break
 
     return filtered
+
 
 def get_vacancies_by_salary(vacancies: List[Vacancy], salary_range: str) -> List[Vacancy]:
     """
     Фильтрует вакансии по зарплате.
+    Поддерживает форматы:
+    - '100000' (минимум)
+    - '100000-150000' (диапазон)
+    - 'от 100000' (минимум)
+    - 'до 150000' (максимум)
     """
-
-    if not salary_range or not salary_range.strip():
+    if not salary_range or not vacancies:
         return vacancies
 
-    salary_range = salary_range.strip().lower()
+    # Очищаем ввод
+    salary_range = salary_range.lower().strip().replace(" ", "")
 
-    # Вспомогательная функция для извлечения чисел
-    def extract_number(text: str) -> int:
-        """Извлекает число из строки, удаляя все не-цифры"""
-        digits = ''.join(filter(lambda x: x.isdigit(), text))
-        return int(digits) if digits else 0
+    if not salary_range:
+        return vacancies
 
     try:
-        # 1. "от 100000" - макс. зарплата >= 100000
-        if salary_range.startswith("от"):
-            min_salary = extract_number(salary_range)
-            if min_salary == 0:  # Не удалось извлечь число
-                return vacancies
+        # 1. Просто число: '100000'
+        if salary_range.isdigit():
+            min_salary = int(salary_range)
+            return [
+                v
+                for v in vacancies
+                if (v.salary_from is not None and v.salary_from >= min_salary)
+                or (v.salary_to is not None and v.salary_to >= min_salary)
+            ]
 
-            result = []
-            for vacancy in vacancies:
-                # Пропускаем вакансии без зарплаты ВООБЩЕ
-                if vacancy.salary_from is None and vacancy.salary_to is None:
-                    continue
-
-                # Если есть максимальная зарплата И она >= нашему минимуму
-                # ИЛИ максимальная зарплата не указана (значит может быть любой)
-                if vacancy.salary_to is None or vacancy.salary_to >= min_salary:
-                    result.append(vacancy)
-            return result
-
-        # 2. "до 150000" - мин. зарплата <= 150000
-        elif salary_range.startswith("до"):
-            max_salary = extract_number(salary_range)
-            if max_salary == 0:  # Не удалось извлечь число
-                return vacancies
-
-            result = []
-            for vacancy in vacancies:
-                # Пропускаем вакансии без зарплаты ВООБЩЕ
-                if vacancy.salary_from is None and vacancy.salary_to is None:
-                    continue
-
-                # Если есть минимальная зарплата И она <= нашему максимуму
-                # ИЛИ минимальная зарплата не указана (значит может быть 0)
-                if vacancy.salary_from is None or vacancy.salary_from <= max_salary:
-                    result.append(vacancy)
-            return result
-
-        # 3. "80000-150000" - пересечение диапазонов
-        elif '-' in salary_range:
-            # Удаляем пробелы и разбиваем
-            parts = salary_range.replace(' ', '').split('-')
+        # 2. Диапазон: '100000-150000'
+        elif "-" in salary_range:
+            parts = salary_range.split("-")
             if len(parts) != 2:
                 return vacancies
 
+            min_salary = int(parts[0])
+            max_salary = int(parts[1])
+
+            if min_salary > max_salary:
+                min_salary, max_salary = max_salary, min_salary
+
+            filtered = []
+            for v in vacancies:
+                # Случай 1: есть обе границы
+                if v.salary_from is not None and v.salary_to is not None:
+                    # Проверяем пересечение диапазонов
+                    if v.salary_from < max_salary and v.salary_to > min_salary:
+                        filtered.append(v)
+                # Случай 2: только "от"
+                elif v.salary_from is not None:
+                    if min_salary <= v.salary_from <= max_salary:
+                        filtered.append(v)
+                # Случай 3: только "до"
+                elif v.salary_to is not None:
+                    if min_salary <= v.salary_to <= max_salary:
+                        filtered.append(v)
+
+            return filtered
+
+        # 3. 'от100000'
+        elif salary_range.startswith("от"):
             try:
-                min_s = int(parts[0])
-                max_s = int(parts[1])
+                min_salary = int(salary_range[2:])
             except ValueError:
                 return vacancies
 
-            result = []
-            for vacancy in vacancies:
-                # Пропускаем вакансии без зарплаты
-                if vacancy.salary_from is None and vacancy.salary_to is None:
-                    continue
+            return [
+                v
+                for v in vacancies
+                if (v.salary_from is not None and v.salary_from >= min_salary)
+                or (v.salary_to is not None and v.salary_to >= min_salary)
+            ]
 
-                # Получаем границы вакансии
-                vac_from = vacancy.salary_from if vacancy.salary_from is not None else 0
-                vac_to = vacancy.salary_to if vacancy.salary_to is not None else 10_000_000_000  # 10 млрд
-
-                # Проверяем пересечение диапазонов
-                if vac_from <= max_s and vac_to >= min_s:
-                    result.append(vacancy)
-            return result
-
-        # 4. "120000" - попадание в диапазон
-        else:
-            target_salary = extract_number(salary_range)
-            if target_salary == 0:
+        # 4. 'до150000'
+        elif salary_range.startswith("до"):
+            try:
+                max_salary = int(salary_range[2:])
+            except ValueError:
                 return vacancies
 
-            result = []
-            for vacancy in vacancies:
-                if vacancy.salary_from is None and vacancy.salary_to is None:
-                    continue
+            return [
+                v
+                for v in vacancies
+                if (v.salary_to is not None and v.salary_to <= max_salary)
+                or (v.salary_from is not None and v.salary_from <= max_salary)
+            ]
 
-                # Получаем границы
-                vac_from = vacancy.salary_from if vacancy.salary_from is not None else 0
-                vac_to = vacancy.salary_to if vacancy.salary_to is not None else 10_000_000_000
+        else:
+            return vacancies
 
-                # Проверяем, попадает ли target_salary в диапазон
-                if vac_from <= target_salary <= vac_to:
-                    result.append(vacancy)
-            return result
-
-    except Exception as e:
-        # Любая ошибка - возвращаем все вакансии
+    except (ValueError, AttributeError):
         return vacancies
 
 
@@ -166,11 +184,7 @@ def sort_vacancies_by_salary(vacancies: List[Vacancy]) -> List[Vacancy]:
             return 0
 
     # Сортируем по убыванию зарплаты
-    sorted_list = sorted(
-        vacancies,
-        key=get_salary_for_sort,
-        reverse=True  # По убыванию (от большего к меньшему)
-    )
+    sorted_list = sorted(vacancies, key=get_salary_for_sort, reverse=True)  # По убыванию (от большего к меньшему)
 
     return sorted_list
 
@@ -221,7 +235,7 @@ def print_vacancies(vacancies: List[Vacancy]) -> None:
     # 2. Выводим заголовок с количеством
     print(f"\n{'=' * 60}")
     print(f"📍 НАЙДЕНО ВАКАНСИЙ: {len(vacancies)}")
-    print('=' * 60)
+    print("=" * 60)
 
     # 3. Выводим каждую вакансию
     for i, vacancy in enumerate(vacancies, start=1):
@@ -248,7 +262,7 @@ def print_vacancies(vacancies: List[Vacancy]) -> None:
     # 4. Закрывающий разделитель
     print(f"\n{'=' * 60}")
     print("✅ Вывод вакансий завершен!")
-    print('=' * 60)
+    print("=" * 60)
 
 
 def format_salary(salary: int) -> str:
@@ -260,4 +274,3 @@ def format_salary(salary: int) -> str:
         return "Не указана"
 
     return f"{salary:,} руб.".replace(",", " ")
-

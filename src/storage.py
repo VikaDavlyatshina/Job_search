@@ -1,9 +1,9 @@
 import json
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
-from src.vacancy import Vacancy
 from pathlib import Path
+from typing import Any, Dict, List
 
+from src.vacancy import Vacancy
 
 
 class BaseStorage(ABC):
@@ -15,7 +15,7 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
-    def get_vacancies(self, **criteria) -> List[Vacancy]:
+    def get_vacancies(self, **criteria: Any) -> List[Vacancy]:
         """Получает вакансию из хранилища"""
         pass
 
@@ -24,10 +24,11 @@ class BaseStorage(ABC):
         """Удаляет вакансию из хранилища"""
         pass
 
+
 class JSONSaver(BaseStorage):
     """Класс для сохранения вакансий в JSON-файл"""
 
-    def __init__(self, filename: str = None):
+    def __init__(self, filename: str | None = None):
         """
         Инициализирует сохранение в указанный файл
         :param filename:
@@ -39,12 +40,11 @@ class JSONSaver(BaseStorage):
             self.__filename = "vacancies.json"
         else:
             # Убедимся, что у файла расширение .json
-            if not filename.endswith('.json'):
+            if not filename.endswith(".json"):
                 self.__filename = f"{filename}.json"
             else:
                 self.__filename = filename
 
-        # Создаём Path объект
         self.__path = Path(self.__filename)
 
         # Создаём файл, если не существует
@@ -55,21 +55,27 @@ class JSONSaver(BaseStorage):
     @property
     def filename(self) -> str:
         """Возвращает имя файла"""
-        return self.__filename
+        return Path(self.__filename).name
 
-
-    def _load_data(self)-> List[Dict[str, Any]]:
+    def _load_data(self) -> List[Dict[str, Any]]:
         """Загружает данные из JSON-файла"""
 
         try:
             with open(self.__path, "r", encoding="utf-8") as file:
-                return json.load(file)
+                data = json.load(file)
+
+            if isinstance(data, list):
+                # Проверяем, что все элементы - словари
+                if all(isinstance(item, dict) for item in data):
+                    return data  # Теперь mypy знает, что это List[Dict]
+                else:
+                    return []  # Если есть не-словари, возвращаем пустой список
+            else:
+                return []
 
         # Если файл не найден или некорректный Json -> возвращаем пустой список
         except (FileNotFoundError, json.JSONDecodeError):
             return []
-
-
 
     def _save_data(self, data: List[Dict[str, Any]]) -> None:
         """Сохраняет данные в JSON-файл."""
@@ -77,11 +83,9 @@ class JSONSaver(BaseStorage):
         with open(self.__path, "w", encoding="utf-8") as file:
             json.dump(data, file, ensure_ascii=False, indent=2)
 
-
     def clear_all(self) -> None:
         """Полностью очищает файл с вакансиями."""
         self._save_data([])
-
 
     def _dict_to_vacancy(self, item: Dict[str, Any]) -> Vacancy:
         """Преобразует словарь в объект Vacancy"""
@@ -128,7 +132,7 @@ class JSONSaver(BaseStorage):
 
         # Проверяем дубликаты по URL (уникальный идентификатор)
         for item in data:
-            if item.get('url') == vacancy.url:
+            if item.get("url") == vacancy.url:
                 print(f"Вакансия уже существует: {vacancy.url}")
                 return
 
@@ -138,7 +142,7 @@ class JSONSaver(BaseStorage):
 
         self._save_data(data)
 
-    def get_vacancies(self, **criteria) -> List[Vacancy]:
+    def get_vacancies(self, **criteria: Any) -> List[Vacancy]:
         """
          Получает вакансии по указанным критериям.
         :param criteria:
@@ -152,7 +156,6 @@ class JSONSaver(BaseStorage):
         # Если нет критериев - возвращаем все
         if not criteria:
             return [self._dict_to_vacancy(item) for item in data]
-
 
         # Фильтруем по критериям
         result = []
@@ -217,5 +220,4 @@ class JSONSaver(BaseStorage):
     def is_vacancy_saved(self, url: str) -> bool:
         """Проверяет, сохранена ли вакансия с указанным URL."""
         data = self._load_data()
-        return any(item.get('url') == url for item in data)
-
+        return any(item.get("url") == url for item in data)
