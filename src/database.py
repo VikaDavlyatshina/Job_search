@@ -17,11 +17,11 @@ class DBCreator:
     def connect_to_postgres(self):
         """Внутренний метод: подключается к служебной БД postgres."""
         self.conn = psycopg2.connect(
-            dbname='postgres',
+            dbname="postgres",
             user=DB_CONFIG["USER"],
             password=DB_CONFIG["PASSWORD"],
             host=DB_CONFIG["HOST"],
-            port=DB_CONFIG["PORT"]
+            port=DB_CONFIG["PORT"],
         )
         self.conn.autocommit = True
         self.cursor = self.conn.cursor()
@@ -30,19 +30,25 @@ class DBCreator:
         """Закрывает все подключения к указанной БД."""
 
         # Принудительное закрытие всех соединение с БД
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
             SELECT pg_terminate_backend(pg_stat_activity.pid)
             FROM pg_stat_activity
             WHERE pg_stat_activity.datname = %s
               AND pid <> pg_backend_pid();
-        """, (db_name,))
+        """,
+            (db_name,),
+        )
         logger.info(f"Закрыты все подключения к БД {db_name}")
 
     def database_exists(self):
         """Проверяет, существует ли база данных."""
-        self.cursor.execute("""
+        self.cursor.execute(
+            """
             SELECT 1 FROM pg_database WHERE datname = %s
-        """, (DB_CONFIG["NAME"],))
+        """,
+            (DB_CONFIG["NAME"],),
+        )
         return self.cursor.fetchone() is not None
 
     def create_database(self):
@@ -82,7 +88,6 @@ class DBCreator:
             logger.info(f"✅ База данных {db_name} создана заново")
             return True
 
-
         except Exception as e:
             logger.error(f"Ошибка при пересоздании БД: {e}")
             raise
@@ -98,13 +103,14 @@ class DBCreator:
             user=DB_CONFIG["USER"],
             password=DB_CONFIG["PASSWORD"],
             host=DB_CONFIG["HOST"],
-            port=DB_CONFIG["PORT"]
+            port=DB_CONFIG["PORT"],
         )
         cursor = conn.cursor()
 
         try:
             # Таблица компаний
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS employers (
                     id INTEGER PRIMARY KEY,
                     name VARCHAR(255) NOT NULL,
@@ -112,11 +118,13 @@ class DBCreator:
                     description TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
             logger.info("✅ Таблица 'employers' создана")
 
             # Таблица вакансий
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS vacancies (
                     id INTEGER PRIMARY KEY,
                     employer_id INTEGER REFERENCES employers(id) ON DELETE CASCADE,
@@ -128,7 +136,8 @@ class DBCreator:
                     requirements TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
             logger.info("✅ Таблица 'vacancies' создана")
 
             conn.commit()
@@ -148,7 +157,7 @@ class DBCreator:
             user=DB_CONFIG["USER"],
             password=DB_CONFIG["PASSWORD"],
             host=DB_CONFIG["HOST"],
-            port=DB_CONFIG["PORT"]
+            port=DB_CONFIG["PORT"],
         )
         cursor = conn.cursor()
 
@@ -167,25 +176,27 @@ class DBCreator:
             user=DB_CONFIG["USER"],
             password=DB_CONFIG["PASSWORD"],
             host=DB_CONFIG["HOST"],
-            port=DB_CONFIG["PORT"]
+            port=DB_CONFIG["PORT"],
         )
         cursor = conn.cursor()
 
         try:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT MAX(created_at) FROM (
                     SELECT created_at FROM employers
                     UNION ALL
                     SELECT created_at FROM vacancies
                 ) AS all_dates
-            """)
+            """
+            )
             last_update = cursor.fetchone()[0]
             return last_update
         finally:
             cursor.close()
             conn.close()
 
-    def fill_database(self,  force_recreate=False):
+    def fill_database(self, force_recreate=False):
         """Заполняет таблицы данными из API HH.ru."""
 
         # Если нужно пересоздать или БД не существует
@@ -202,7 +213,7 @@ class DBCreator:
             if last_update:
                 logger.info(f"📊 База данных уже содержит данные (последнее обновление: {last_update})")
                 response = input("Хотите обновить данные? (да/нет): ").strip().lower()
-                if response not in ['да', 'д', 'yes', 'y']:
+                if response not in ["да", "д", "yes", "y"]:
                     logger.info("Заполнение пропущено")
                     return
 
@@ -213,7 +224,7 @@ class DBCreator:
             user=DB_CONFIG["USER"],
             password=DB_CONFIG["PASSWORD"],
             host=DB_CONFIG["HOST"],
-            port=DB_CONFIG["PORT"]
+            port=DB_CONFIG["PORT"],
         )
         cursor = conn.cursor()
 
@@ -236,11 +247,11 @@ class DBCreator:
                        VALUES (%s, %s, %s, %s) 
                        ON CONFLICT (id) DO NOTHING""",
                     (
-                        employer_data['id'],
-                        employer_data['name'],
-                        employer_data.get('alternate_url', ''),
-                        employer_data.get('description', '')[:1000]
-                    )
+                        employer_data["id"],
+                        employer_data["name"],
+                        employer_data.get("alternate_url", ""),
+                        employer_data.get("description", "")[:1000],
+                    ),
                 )
                 companies_saved += 1
                 logger.info(f"✅ Компания сохранена: {employer_data['name']}")
@@ -250,17 +261,17 @@ class DBCreator:
                 logger.info(f"Получено вакансий: {len(vacancies_data)}")
 
                 for vac in vacancies_data:
-                    salary_info = vac.get('salary')
+                    salary_info = vac.get("salary")
                     if salary_info:
-                        salary_from = salary_info.get('from')
-                        salary_to = salary_info.get('to')
-                        currency = salary_info.get('currency')
+                        salary_from = salary_info.get("from")
+                        salary_to = salary_info.get("to")
+                        currency = salary_info.get("currency")
                     else:
                         salary_from = salary_to = currency = None
 
-                    requirements = vac.get('snippet', {}).get('requirement', '')
+                    requirements = vac.get("snippet", {}).get("requirement", "")
                     if requirements and len(requirements) > 1000:
-                        requirements = requirements[:997] + '...'
+                        requirements = requirements[:997] + "..."
 
                     cursor.execute(
                         """INSERT INTO vacancies (id, employer_id, title, 
@@ -268,15 +279,15 @@ class DBCreator:
                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) 
                            ON CONFLICT (id) DO NOTHING""",
                         (
-                            vac['id'],
+                            vac["id"],
                             employer_id,
-                            vac['name'],
+                            vac["name"],
                             salary_from,
                             salary_to,
                             currency,
-                            vac.get('alternate_url', ''),
-                            requirements
-                        )
+                            vac.get("alternate_url", ""),
+                            requirements,
+                        ),
                     )
                     vacancies_saved += 1
 
@@ -295,6 +306,3 @@ class DBCreator:
         finally:
             cursor.close()
             conn.close()
-
-
-
