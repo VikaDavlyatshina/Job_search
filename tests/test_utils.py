@@ -1,5 +1,7 @@
 from typing import List
+
 import pytest
+
 from src.utils import (
     filter_vacancies,
     filter_vacancies_by_profession,

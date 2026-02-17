@@ -1,4 +1,7 @@
+from typing import Optional
+
 import psycopg2
+
 from config import DB_CONFIG, EMPLOYER_IDS, setup_database_logger
 from src.api import HeadHunterAPI
 
@@ -7,97 +10,132 @@ logger = setup_database_logger()
 
 
 class DBCreator:
-    def __init__(self):
+    def __init__(self) -> None:
         """Подключение к серверу PostgreSQL для создания БД."""
-
-        self.conn = None
-        self.cursor = None
+        self.conn: Optional[psycopg2.extensions.connection] = None
+        self.cursor: Optional[psycopg2.extensions.cursor] = None
         self.connect_to_postgres()
 
-    def connect_to_postgres(self):
+    def connect_to_postgres(self) -> None:
         """Внутренний метод: подключается к служебной БД postgres."""
-        self.conn = psycopg2.connect(
-            dbname="postgres",
-            user=DB_CONFIG["USER"],
-            password=DB_CONFIG["PASSWORD"],
-            host=DB_CONFIG["HOST"],
-            port=DB_CONFIG["PORT"],
-        )
-        self.conn.autocommit = True
-        self.cursor = self.conn.cursor()
+        try:
+            self.conn = psycopg2.connect(
+                dbname="postgres",
+                user=DB_CONFIG["USER"],
+                password=DB_CONFIG["PASSWORD"],
+                host=DB_CONFIG["HOST"],
+                port=DB_CONFIG["PORT"],
+            )
+            self.conn.autocommit = True
+            self.cursor = self.conn.cursor()
+        except Exception as e:
+            logger.error(f"Ошибка подключения к PostgreSQL: {e}")
+            self.conn = None
+            self.cursor = None
+            raise
 
-    def close_all_connections_to_db(self, db_name):
+    def _ensure_connection(self) -> bool:
+        """Проверяет, есть ли активное соединение."""
+        if self.conn is None or self.cursor is None:
+            logger.error("Нет подключения к БД")
+            return False
+        return True
+
+    def _get_cursor(self) -> psycopg2.extensions.cursor:
+        """Безопасно возвращает курсор или вызывает исключение."""
+        if self.cursor is None:
+            raise RuntimeError("Курсор не инициализирован")
+        return self.cursor
+
+    def _get_conn(self) -> psycopg2.extensions.connection:
+        """Безопасно возвращает соединение или вызывает исключение."""
+        if self.conn is None:
+            raise RuntimeError("Соединение не инициализировано")
+        return self.conn
+
+    def close_all_connections_to_db(self, db_name: str) -> None:
         """Закрывает все подключения к указанной БД."""
+        try:
+            cursor = self._get_cursor()
+            cursor.execute(
+                """
+                SELECT pg_terminate_backend(pg_stat_activity.pid)
+                FROM pg_stat_activity
+                WHERE pg_stat_activity.datname = %s
+                  AND pid <> pg_backend_pid();
+            """,
+                (db_name,),
+            )
+            logger.info(f"Закрыты все подключения к БД {db_name}")
+        except (RuntimeError, psycopg2.Error) as e:
+            logger.error(f"Ошибка при закрытии подключений: {e}")
 
-        # Принудительное закрытие всех соединение с БД
-        self.cursor.execute(
-            """
-            SELECT pg_terminate_backend(pg_stat_activity.pid)
-            FROM pg_stat_activity
-            WHERE pg_stat_activity.datname = %s
-              AND pid <> pg_backend_pid();
-        """,
-            (db_name,),
-        )
-        logger.info(f"Закрыты все подключения к БД {db_name}")
-
-    def database_exists(self):
+    def database_exists(self) -> bool:
         """Проверяет, существует ли база данных."""
-        self.cursor.execute(
-            """
-            SELECT 1 FROM pg_database WHERE datname = %s
-        """,
-            (DB_CONFIG["NAME"],),
-        )
-        return self.cursor.fetchone() is not None
+        try:
+            cursor = self._get_cursor()
+            cursor.execute(
+                "SELECT 1 FROM pg_database WHERE datname = %s",
+                (DB_CONFIG["NAME"],),
+            )
+            result = cursor.fetchone()
+            return result is not None
+        except (RuntimeError, psycopg2.Error) as e:
+            logger.error(f"Ошибка при проверке существования БД: {e}")
+            return False
 
-    def create_database(self):
+    def create_database(self) -> bool:
         """Создает базу данных, если её нет"""
         db_name = DB_CONFIG["NAME"]
 
-        if self.database_exists():
-            logger.info(f"База данных {db_name} уже существует")
-            return False
-
         try:
-            self.cursor.execute(f"CREATE DATABASE {db_name}")
+            if self.database_exists():
+                logger.info(f"База данных {db_name} уже существует")
+                return False
+
+            cursor = self._get_cursor()
+            cursor.execute(f"CREATE DATABASE {db_name}")
             logger.info(f"✅ База данных {db_name} создана успешно.")
             return True
-
         except Exception as e:
             logger.error(f"Ошибка при создании БД: {e}")
             raise
         finally:
-            self.cursor.close()
-            self.conn.close()
+            if self.cursor:
+                self.cursor.close()
+            if self.conn:
+                self.conn.close()
 
-    def recreate_database(self):
+    def recreate_database(self) -> bool:
         """Пересоздает базу данных (удаляет и создает заново)."""
+
         db_name = DB_CONFIG["NAME"]
 
+        if db_name is None:  # Проверка на None
+            logger.error("Имя базы данных не может быть None")
+            return False
+
         try:
-            # Закрываем все подключения к БД
-            self.close_all_connections_to_db(db_name)
-
-            # Удаляем старую БД
-            self.cursor.execute(f"DROP DATABASE IF EXISTS {db_name}")
+            self.close_all_connections_to_db(db_name)  # ✅ Теперь точно str
+            cursor = self._get_cursor()
+            cursor.execute(f"DROP DATABASE IF EXISTS {db_name}")
             logger.info(f"Старая БД {db_name} удалена")
-
-            # Создаем новую БД
-            self.cursor.execute(f"CREATE DATABASE {db_name}")
+            cursor.execute(f"CREATE DATABASE {db_name}")
             logger.info(f"✅ База данных {db_name} создана заново")
+
             return True
 
         except Exception as e:
             logger.error(f"Ошибка при пересоздании БД: {e}")
             raise
         finally:
-            self.cursor.close()
-            self.conn.close()
+            if self.cursor:
+                self.cursor.close()
+            if self.conn:
+                self.conn.close()
 
-    def create_tables(self):
+    def create_tables(self) -> None:
         """Создает таблицы в БД, если их нет."""
-
         conn = psycopg2.connect(
             dbname=DB_CONFIG["NAME"],
             user=DB_CONFIG["USER"],
@@ -108,7 +146,6 @@ class DBCreator:
         cursor = conn.cursor()
 
         try:
-            # Таблица компаний
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS employers (
@@ -122,7 +159,6 @@ class DBCreator:
             )
             logger.info("✅ Таблица 'employers' создана")
 
-            # Таблица вакансий
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS vacancies (
@@ -141,7 +177,6 @@ class DBCreator:
             logger.info("✅ Таблица 'vacancies' создана")
 
             conn.commit()
-
         except Exception as e:
             logger.error(f"Ошибка при создании таблиц: {e}")
             conn.rollback()
@@ -150,7 +185,7 @@ class DBCreator:
             cursor.close()
             conn.close()
 
-    def is_database_empty(self):
+    def is_database_empty(self) -> bool:
         """Проверяет, есть ли данные в таблицах."""
         conn = psycopg2.connect(
             dbname=DB_CONFIG["NAME"],
@@ -164,12 +199,12 @@ class DBCreator:
         try:
             cursor.execute("SELECT COUNT(*) FROM employers")
             count = cursor.fetchone()[0]
-            return count == 0
+            return bool(count == 0)
         finally:
             cursor.close()
             conn.close()
 
-    def get_last_update_time(self):
+    def get_last_update_time(self) -> Optional[str]:
         """Получает время последнего обновления данных."""
         conn = psycopg2.connect(
             dbname=DB_CONFIG["NAME"],
@@ -191,23 +226,19 @@ class DBCreator:
             """
             )
             last_update = cursor.fetchone()[0]
-            return last_update
+            return str(last_update) if last_update else None
         finally:
             cursor.close()
             conn.close()
 
-    def fill_database(self, force_recreate=False):
+    def fill_database(self, force_recreate: bool = False) -> None:
         """Заполняет таблицы данными из API HH.ru."""
-
-        # Если нужно пересоздать или БД не существует
         if force_recreate or not self.database_exists():
-            self.connect_to_postgres()  # Переподключаемся к postgres
+            self.connect_to_postgres()
             self.recreate_database()
 
-        # Создаем таблицы (если их нет)
         self.create_tables()
 
-        # Проверяем, есть ли уже данные
         if not force_recreate and not self.is_database_empty():
             last_update = self.get_last_update_time()
             if last_update:
@@ -217,7 +248,6 @@ class DBCreator:
                     logger.info("Заполнение пропущено")
                     return
 
-        # Заполняем данными
         hh = HeadHunterAPI()
         conn = psycopg2.connect(
             dbname=DB_CONFIG["NAME"],
@@ -235,17 +265,16 @@ class DBCreator:
             for employer_id in EMPLOYER_IDS:
                 logger.info(f"\nОбрабатываем компанию ID: {employer_id}")
 
-                # Получаем данные о компании
                 employer_data = hh.get_employer_info(employer_id)
                 if not employer_data:
                     logger.warning(f"Не удалось получить данные компании {employer_id}")
                     continue
 
-                # Сохраняем компанию
                 cursor.execute(
-                    """INSERT INTO employers (id, name, url, description) 
-                       VALUES (%s, %s, %s, %s) 
-                       ON CONFLICT (id) DO NOTHING""",
+                    """
+                    INSERT INTO employers (id, name, url, description)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (id) DO NOTHING""",
                     (
                         employer_data["id"],
                         employer_data["name"],
@@ -256,7 +285,6 @@ class DBCreator:
                 companies_saved += 1
                 logger.info(f"✅ Компания сохранена: {employer_data['name']}")
 
-                # Получаем вакансии
                 vacancies_data = hh.get_vacancies_by_employer(employer_id, limit=50)
                 logger.info(f"Получено вакансий: {len(vacancies_data)}")
 
@@ -274,10 +302,11 @@ class DBCreator:
                         requirements = requirements[:997] + "..."
 
                     cursor.execute(
-                        """INSERT INTO vacancies (id, employer_id, title, 
-                           salary_from, salary_to, currency, url, requirements) 
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s) 
-                           ON CONFLICT (id) DO NOTHING""",
+                        """
+                        INSERT INTO vacancies (id, employer_id, title,
+                           salary_from, salary_to, currency, url, requirements)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (id) DO NOTHING""",
                         (
                             vac["id"],
                             employer_id,
@@ -294,7 +323,7 @@ class DBCreator:
                 conn.commit()
                 logger.info(f"✅ Сохранено вакансий: {len(vacancies_data)}")
 
-            logger.info(f"ИТОГИ ЗАПОЛНЕНИЯ:")
+            logger.info("ИТОГИ ЗАПОЛНЕНИЯ:")
             logger.info(f"  Компаний: {companies_saved}/{len(EMPLOYER_IDS)}")
             logger.info(f"  Вакансий: {vacancies_saved}")
 
@@ -302,7 +331,6 @@ class DBCreator:
             logger.error(f"Ошибка при заполнении БД: {e}")
             conn.rollback()
             raise
-
         finally:
             cursor.close()
             conn.close()

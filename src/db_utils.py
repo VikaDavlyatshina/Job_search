@@ -1,7 +1,7 @@
-from typing import List, Tuple, Optional
-from src.db_manager import DBManager
-from src.database import DBCreator
+from typing import List, Optional, Tuple
 
+from src.database import DBCreator
+from src.db_manager import DBManager
 
 # ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 
@@ -18,14 +18,14 @@ def format_salary(sal_from: Optional[int], sal_to: Optional[int], currency: Opti
         return "зарплата не указана"
 
 
-def print_header(title: str, symbol: str = "═", length: int = 50):
+def print_header(title: str, symbol: str = "═", length: int = 50) -> None:
     """Печатает красивый заголовок"""
     print(f"\n{symbol * length}")
     print(f"{title}")
     print(f"{symbol * length}")
 
 
-def wait_for_enter():
+def wait_for_enter() -> None:
     """Ждет нажатия Enter"""
     input("\nНажмите Enter чтобы продолжить...")
 
@@ -33,7 +33,7 @@ def wait_for_enter():
 # ========== ОСНОВНЫЕ ФУНКЦИИ ДЛЯ БД ==========
 
 
-def setup_database():
+def setup_database() -> None:
     """Создание и заполнение базы данных"""
     print_header("🗄️  НАСТРОЙКА БАЗЫ ДАННЫХ", "═")
 
@@ -44,7 +44,7 @@ def setup_database():
     print_header("✅ БАЗА ДАННЫХ ГОТОВА К РАБОТЕ", "═")
 
 
-def show_companies_stats():
+def show_companies_stats() -> None:
     """1. Статистика по компаниям"""
     db = DBManager()
     print_header("📊 СТАТИСТИКА ПО КОМПАНИЯМ", "═")
@@ -66,7 +66,7 @@ def show_companies_stats():
     db.close()
 
 
-def show_avg_salary():
+def show_avg_salary() -> None:
     """3. Средняя зарплата"""
     db = DBManager()
     print_header("💰 СРЕДНЯЯ ЗАРПЛАТА", "═")
@@ -81,7 +81,7 @@ def show_avg_salary():
     db.close()
 
 
-def show_higher_salary_vacancies():
+def show_higher_salary_vacancies() -> None:
     """4. Вакансии выше средней"""
     db = DBManager()
     print_header("📈 ВАКАНСИИ С ЗАРПЛАТОЙ ВЫШЕ СРЕДНЕЙ", "═")
@@ -105,7 +105,22 @@ def show_higher_salary_vacancies():
 
     for company, title, sal_from, sal_to, curr, url in vacancies[:15]:
         salary = format_salary(sal_from, sal_to, curr)
-        vac_avg = (sal_from + sal_to) / 2 if sal_from and sal_to else (sal_from or sal_to)
+
+        def get_vacancy_avg(s_from: Optional[int], s_to: Optional[int]) -> float:
+            if s_from is not None and s_to is not None:
+                return (s_from + s_to) / 2.0
+            elif s_from is not None:
+                return float(s_from)
+            elif s_to is not None:
+                return float(s_to)
+            else:
+                return 0.0
+
+        vac_avg = get_vacancy_avg(sal_from, sal_to)
+
+        if vac_avg == 0:
+            continue  # пропускаем вакансии без зарплаты
+
         diff_percent = ((vac_avg / avg) - 1) * 100
         print(f"\n• {company}: {title}")
         print(f"  {salary} (выше на {diff_percent:.1f}%)")
@@ -117,7 +132,7 @@ def show_higher_salary_vacancies():
     db.close()
 
 
-def search_vacancies_in_db():
+def search_vacancies_in_db() -> None:
     """5. Поиск по ключевому слову"""
     keyword = input("\n🔍 Введите ключевое слово для поиска: ").strip()
 
@@ -150,7 +165,7 @@ def search_vacancies_in_db():
     db.close()
 
 
-def show_all_companies_preview():
+def show_all_companies_preview() -> None:
     """
     2. Обзор всех компаний (по 15 вакансий)
     """
@@ -202,7 +217,7 @@ def show_all_companies_preview():
         db.close()
 
 
-def show_selected_company_full(choice: str, companies: List[Tuple], db: Optional[DBManager] = None):
+def show_selected_company_full(choice: str, companies: List[Tuple], db: Optional[DBManager] = None) -> None:
     """Показывает все вакансии выбранной компании"""
     should_close = False
     if db is None:
@@ -263,7 +278,7 @@ def show_selected_company_full(choice: str, companies: List[Tuple], db: Optional
         db.close()
 
 
-def _show_company_statistics(vacancies: List[Tuple]):
+def _show_company_statistics(vacancies: List[Tuple]) -> None:
     """Внутренняя функция для статистики по компании"""
     total = len(vacancies)
     with_salary = 0
@@ -311,7 +326,7 @@ def _show_company_statistics(vacancies: List[Tuple]):
         print("   • Нет данных о зарплатах")
 
 
-def show_database_menu():
+def show_database_menu() -> None:
     """Главное меню для работы с БД"""
     while True:
         print_header("🗄️  МЕНЮ РАБОТЫ С БАЗОЙ ДАННЫХ", "─")

@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod  # ABC - для создания абстр�
 from typing import Any, Dict, List, Optional, Union
 
 import requests  # Библиотека для HTTP-запросов к API
+
 from config import setup_api_logger
 
 # Создаём logger
@@ -196,7 +197,7 @@ class HeadHunterAPI(BaseVacancyApi):
         # 4. Постраничный поиск
 
         # Здесь будем накапливать все найденные вакансии
-        all_vacancies = []
+        all_vacancies: List[Dict[str, Any]] = []
 
         for page in range(max_pages):
             """
@@ -277,18 +278,16 @@ class HeadHunterAPI(BaseVacancyApi):
                 return {}
 
         try:
-            # URL для получения информации о компании
             url = f"https://api.hh.ru/employers/{employer_id}"
-
-            # Выполняем запрос
             response = self.__session.get(url, timeout=10)
-            response.raise_for_status()  # Проверяем на ошибки HTTP
+            response.raise_for_status()
 
-            # Парсим JSON ответ
+            # Получаем данные и явно приводим к нужному типу
             employer_data = response.json()
 
-            if not employer_data:
-                logger.warning(f"Нет данных о компании {employer_id}")
+            # Проверяем, что это действительно словарь
+            if not isinstance(employer_data, dict):
+                logger.warning(f"Получен неверный формат данных для компании {employer_id}")
                 return {}
 
             # Проверяем обязательные поля
@@ -302,15 +301,10 @@ class HeadHunterAPI(BaseVacancyApi):
 
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 404:
-                logger.warning(f" Компания с ID {employer_id} не найдена")
+                logger.warning(f"Компания с ID {employer_id} не найдена")
             else:
                 logger.error(f"HTTP ошибка при получении компании {employer_id}: {e}")
             return {}
-
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Ошибка соединения при получении компании {employer_id}: {e}")
-            return {}
-
         except Exception as e:
             logger.error(f"Неожиданная ошибка при получении компании {employer_id}: {e}")
             return {}
@@ -343,13 +337,13 @@ class HeadHunterAPI(BaseVacancyApi):
         # Ограничиваем limit (чтобы не делать слишком много запросов)
         limit = min(limit, 200)  # Максимум 200 вакансий
 
-        all_vacancies = []
+        all_vacancies: List[Dict[str, Any]] = []
         page = 0
 
         try:
             # Получаем вакансии постранично, пока не наберем limit
             while len(all_vacancies) < limit:
-                params = {
+                params: Dict[str, Any] = {
                     "employer_id": employer_id,
                     "page": page,
                     "per_page": min(100, limit - len(all_vacancies)),  # API позволяет до 100 на страницу
@@ -387,7 +381,8 @@ class HeadHunterAPI(BaseVacancyApi):
             return result
 
         except requests.exceptions.RequestException as e:
+            logger.error(f"Ошибка при получении вакансий компании {employer_id}: {e}")
             return []
-
         except Exception as e:
+            logger.error(f"Неожиданная ошибка при получении вакансий компании {employer_id}: {e}")
             return []

@@ -1,9 +1,8 @@
 import logging
-from pathlib import Path
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
-
 
 # Загрузка переменных из .env файла
 load_dotenv()
