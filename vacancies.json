@@ -1,0 +1,262 @@
+[
+  {
+    "name": "Junior Python разработчик",
+    "area": "Москва",
+    "salary_from": 70000,
+    "salary_to": 110000,
+    "requirement": "Был уверенным пользователем Python 3. Имел опыт работы с веб-фреймворками: FastAPI или Django/Flask. Опыт работы с системами контроля...",
+    "responsibility": "Участвовать в разработке веб-приложений и сервисов на Python. Работать с REST API: проектировать, реализовывать и тестировать их. ",
+    "schedule": "Удаленная работа",
+    "url": "https://hh.ru/vacancy/129284357"
+  },
+  {
+    "name": "Python Backend Разработчик (Junior+)",
+    "area": "Березовский (Свердловская область)",
+    "salary_from": 300,
+    "salary_to": "Не указано",
+    "requirement": "Обязательно: - Опыт не коммерческой разработки на Python 12+ месяцев. - Базовое знание FastAPI или Django. - Понимание SQLAlchemy или других ORM...",
+    "responsibility": "Написание API интеграций на Django. - Разработка и тестирование новых фичей. - Участие в разработке новых продуктов на FastAPI. - Работать с БД...",
+    "schedule": "Удаленная работа",
+    "url": "https://hh.ru/vacancy/129349485"
+  },
+  {
+    "name": "Python-разработчик (junior+)",
+    "area": "Москва",
+    "salary_from": "Не указано",
+    "salary_to": "Не указано",
+    "requirement": "Опыт коммерческой разработки на Python от года. Знание основ веб-разработки (HTTP, REST API). Опыт работы с фреймворками FastAPI, Django. ",
+    "responsibility": "Разработка и поддержка сервисов на Python (FastAPI, aiohttp). Работа с базами данных (PostgreSQL, ORM). Интеграция с брокерами сообщений и системами...",
+    "schedule": "Удаленная работа",
+    "url": "https://hh.ru/vacancy/129805467"
+  },
+  {
+    "name": "Junior Specialist / HR & Admin Processes",
+    "area": "Москва",
+    "salary_from": 220000,
+    "salary_to": "Не указано",
+    "requirement": "Knowledge of IT tools for data analysis and presentation much preferred (Excel, PowerBI, SQL, Python etc.). Work experience as a...",
+    "responsibility": "Mindset” corporate project elaboration (training materials adjustment & development, internal sessions schedule preparation, employees’ and dealers’ trips & events organization support). ",
+    "schedule": "Полный день",
+    "url": "https://hh.ru/vacancy/129760772"
+  },
+  {
+    "name": "Junior DevOps Engineer",
+    "area": "Москва",
+    "salary_from": 150000,
+    "salary_to": 170000,
+    "requirement": "Опыт использования систем управления конфигурациями (ansible). Опыт написания скриптов (bash, python). Понимание процесса и методологии разработки ПО. Опыт работы с...",
+    "responsibility": "Поддерживать и развивать кластеры Kubernetes, Ceph. Настраивать системы мониторинга: Prometheus, Grafana. Автоматизировать процессы по необходимости (написание плейбуков). Настраивать и поддерживать...",
+    "schedule": "Полный день",
+    "url": "https://hh.ru/vacancy/129697655"
+  },
+  {
+    "name": "Project Manager (Junior+, Middle)",
+    "area": "Москва",
+    "salary_from": 130000,
+    "salary_to": 150000,
+    "requirement": "Опыт от 2 лет опыта работы Project Manager / Coordinator / Producer в digital-компаниях. Опыт ведения кросс-функциональных команд (дизайн, фронт...",
+    "responsibility": "Это человек, который обеспечивает прозрачное, своевременное и качественное выполнение проектов - от получения запроса до передачи финального результата клиенту. Основные задачи. ",
+    "schedule": "Удаленная работа",
+    "url": "https://hh.ru/vacancy/129515749"
+  },
+  {
+    "name": "Junior Python Backend разработчик",
+    "area": "Москва",
+    "salary_from": 100000,
+    "salary_to": 150000,
+    "requirement": "Опыт работы с Python: от 1 года. ️Знание и опыт работы с FastAPI, Pydantic, PostgreSQL или других СУБД, docker. ️",
+    "responsibility": "Обязанности: ‍Написание новых backend-сервисов на Python. ‍Поддержка и развитие существующих сервисов в распределенной системе обработки видео. ‍Деплой сервисов в...",
+    "schedule": "Полный день",
+    "url": "https://hh.ru/vacancy/129298572"
+  },
+  {
+    "name": "Junior ML/Data Scientist",
+    "area": "Москва",
+    "salary_from": 100000,
+    "salary_to": 150000,
+    "requirement": "Уверенные знания Python (numpy, pandas, matplotlib/seaborn). Понимание основ ML: линейные модели, деревья, ансамбли, метрики качества. Опыт работы со scikit...",
+    "responsibility": "Понимание статистики: распределения, проверка гипотез, корреляции.",
+    "schedule": "Удаленная работа",
+    "url": "https://hh.ru/vacancy/129775186"
+  },
+  {
+    "name": "Системный аналитик (Junior)",
+    "area": "Москва",
+    "salary_from": 120000,
+    "salary_to": "Не указано",
+    "requirement": "Programming lang: PHP Lavarel, Java, 1C, Low-code ESB Talend, Python, C#. Databases: PostgreSQL. Integrations: REST, SOAP, FTP. ",
+    "responsibility": "Совместно с действующей командой участвовать в разработке нового продукта. С помощью экспертов процесса погрузиться в бизнес-логику работы разных модулей...",
+    "schedule": "Полный день",
+    "url": "https://hh.ru/vacancy/129693573"
+  },
+  {
+    "name": "Python Developer / Backend (Junior+)",
+    "area": "Екатеринбург",
+    "salary_from": 70000,
+    "salary_to": 140000,
+    "requirement": "Опыт работы в Backend разработке на Python от 1 года. Знание Flask, FastAPI, PostgreSQL, Redis, Celery, Git, Rabbitmq, SQLAlchemy.",
+    "responsibility": "Разработка Backend микросервисов и сервисов. Проектирование новых сервисов, участие в разработке очень масштабной внутренней инфраструктуры проектов. Поддержка существующих сервисов и...",
+    "schedule": "Полный день",
+    "url": "https://hh.ru/vacancy/129530660"
+  },
+  {
+    "name": "Системный администратор (Junior / Начальный уровень)",
+    "area": "Москва",
+    "salary_from": 100000,
+    "salary_to": "Не указано",
+    "requirement": "Базовые навыки программирования и написания скриптов: Знание основ одного из скриптовых языков для администрирования (Bash, Python). Понимание принципов автоматизации IT...",
+    "responsibility": "Ключевая цель: Обеспечение штатной работы пользовательской IT-инфраструктуры, участие в задачах по её автоматизации и освоение принципов функционирования корпоративной сети...",
+    "schedule": "Полный день",
+    "url": "https://hh.ru/vacancy/129604958"
+  },
+  {
+    "name": "Junior ML engineer",
+    "area": "Москва",
+    "salary_from": 100000,
+    "salary_to": "Не указано",
+    "requirement": "Опыт работы в качестве ML от 6 месяцев. Базовые знания Python. Опыт работы с фреймворками LLM (vLLM, Ollama); RAG. ",
+    "responsibility": "Созданием чат-ботов на основе LLM, отвечающих по внутренним документам компании. Разработка AI-агентов на основе LangChain / LangGraph и т...",
+    "schedule": "Полный день",
+    "url": "https://hh.ru/vacancy/129699257"
+  },
+  {
+    "name": "Data-analyst (junior)",
+    "area": "Москва",
+    "salary_from": "Не указано",
+    "salary_to": 100000,
+    "requirement": "Владение SQL (оконные функции, cte, вложенные запросы и др.). Опыт работы с Python, Pandas и Matplotlib для анализа данных. ",
+    "responsibility": "Проведение аналитических исследований на Python (Pandas, Matplotlib, Numpy). Участие в процессах ETL (работа с GitHub), создание витрин данных. ",
+    "schedule": "Удаленная работа",
+    "url": "https://hh.ru/vacancy/129758012"
+  },
+  {
+    "name": "Data Engineer/ Дата инженер (junior)",
+    "area": "Москва",
+    "salary_from": "Не указано",
+    "salary_to": 100000,
+    "requirement": "Имеешь опыт работы с MySQL и сложными SQL-запросами (CTE, оконные функции). Знаком с библиотеками pandas, NumPy, SQLAlchemy. ",
+    "responsibility": "Писать скрипты на Python для сбора, очистки и обработки данных (ETL). Работать с MySQL: проектировать витрины данных и оптимизировать SQL...",
+    "schedule": "Удаленная работа",
+    "url": "https://hh.ru/vacancy/129637770"
+  },
+  {
+    "name": "Data Scientist (Junior)",
+    "area": "Москва",
+    "salary_from": "Не указано",
+    "salary_to": 100000,
+    "requirement": "Высшее образование (математическое, техническое). Возможность работать полную рабочую неделю (full time). Знание современных архитектур нейросетей. Понимание как устроены классические алгоритмы...",
+    "responsibility": "Собирать и готовить данные для использования в ML-моделях. Разработка и поддержка микросервисов на Python, основанных на моделях компьютерного зрения...",
+    "schedule": "Полный день",
+    "url": "https://hh.ru/vacancy/129426267"
+  },
+  {
+    "name": "Junior аналитик данных (исследователь)",
+    "area": "Владивосток",
+    "salary_from": 92000,
+    "salary_to": "Не указано",
+    "requirement": "Базовые знания статистики. Развитые коммуникативные навыки. Критическое мышление. Опыт работы с Python. Знания основных концепций в работе с данными (типы...",
+    "responsibility": "Участие в процессе исследований: сбор необходимых данных и их последующая обработка; проверка гипотез; оформление выводов, интерпретация результатов. Написание ad-hoc...",
+    "schedule": "Полный день",
+    "url": "https://hh.ru/vacancy/127199906"
+  },
+  {
+    "name": "Junior Data Analyst/Аналитик данных",
+    "area": "Ижевск",
+    "salary_from": 90000,
+    "salary_to": "Не указано",
+    "requirement": "Опыт с ETL (Airflow, dbt). Знание основ A/B-тестирования. Умение работать с API.",
+    "responsibility": "Трехнедельная оплачиваемая стажировка под присмотром наставника. Работа над нашим основным продуктом - ИИ ассистент Софи по поиску работы. Комплексная работа с...",
+    "schedule": "Удаленная работа",
+    "url": "https://hh.ru/vacancy/129307557"
+  },
+  {
+    "name": "Python Developer (Senior / Tech Lead, LegalTech)",
+    "area": "Москва",
+    "salary_from": 300000,
+    "salary_to": 400000,
+    "requirement": "Опыт работы fullstack-разработчиком. Уверенный backend в одном из стеков: Python (FastAPI / Django). Понимание архитектуры серверных приложений. Опыт работы с...",
+    "responsibility": "Разработка и развитие Core-логики платформы. Проектирование и реализация backend-сервисов. Участие в архитектурных решениях (Core / API / интеграции). ",
+    "schedule": "Удаленная работа",
+    "url": "https://hh.ru/vacancy/130342080"
+  },
+  {
+    "name": "Python разработчик",
+    "area": "Москва",
+    "salary_from": 300000,
+    "salary_to": 300000,
+    "requirement": "Опыт коммерческой разработки на Python от 3 лет. Отличное знание Django и/или FastAPI. Уверенное владение PostgreSQL, опыт работы с...",
+    "responsibility": "Разработка и поддержка высоконагруженных backend-сервисов на Python (Django, FastAPI). Проектирование и реализация микросервисной архитектуры. Интеграция с PostgreSQL, RabbitMQ, Kafka...",
+    "schedule": "Удаленная работа",
+    "url": "https://hh.ru/vacancy/130352022"
+  },
+  {
+    "name": "Middle backend-разработчик",
+    "area": "Москва",
+    "salary_from": 150000,
+    "salary_to": 250000,
+    "requirement": "Уверенный опыт с Python 3, Django, DRF. Опыт написания REST API. Владение Django ORM / SQLAlchemy / чистым SQL. Уверенная работа с...",
+    "responsibility": "100 000 зарегистрированных пользователей. 65 полезных инструментов для селлеров (подбор товара, конкурентный анализ, прогнозирование, продвижение и др.). 95% точность данных. ",
+    "schedule": "Удаленная работа",
+    "url": "https://hh.ru/vacancy/129934890"
+  },
+  {
+    "name": "Backend разработчик",
+    "area": "Москва",
+    "salary_from": 170000,
+    "salary_to": "Не указано",
+    "requirement": "В цифрах о нем: Более 6 млн пользователей. Очень хотим, чтобы работать с нашим проектом было не только интересно, но...",
+    "responsibility": "Docker, GitLab CI/CD, Kubernetes. С точки зрения кодовой базы проект представляет из себя высоконагруженный Django монолит (до 900 rps...",
+    "schedule": "Удаленная работа",
+    "url": "https://hh.ru/vacancy/129970755"
+  },
+  {
+    "name": "Разработчик Python",
+    "area": "Москва",
+    "salary_from": 120000,
+    "salary_to": 200000,
+    "requirement": "Опыт программирования на python от 3-х лет. Отличное знание Django и Django ORM. Знание Django, ORM, SQL, REST APIs...",
+    "responsibility": "Поддержка и развитие существующего кода бекендов различных сервисов компании. Проектирование и разработка новых модулей ПО. Оценка и декомпозиция задач. ",
+    "schedule": "Удаленная работа",
+    "url": "https://hh.ru/vacancy/130141907"
+  },
+  {
+    "name": "Python разработчик (Django, Selenium/Playwright)",
+    "area": "Москва",
+    "salary_from": 100000,
+    "salary_to": 130000,
+    "requirement": "Наши ценности - позитивное мышление, открытость, порядочность, ответственность за результат. Требуемые навыки: Умение работать с технической документацией на английском языке. ",
+    "responsibility": "Разработка на Python ≥3.5 с использованием typing. Работа с Django (DRF, Django Admin). Написание парсеров и ботов с использованием...",
+    "schedule": "Полный день",
+    "url": "https://hh.ru/vacancy/130366820"
+  },
+  {
+    "name": "Python-разработчик",
+    "area": "Москва",
+    "salary_from": 100000,
+    "salary_to": "Не указано",
+    "requirement": "Опыт коммерческой разработки на Python от 1 года. Понимание принципов ООП и паттернов проектирования. Опыт работы с одним из современных...",
+    "responsibility": "Разработка и поддержка многопоточных приложений. Разработкой веб приложений на Python (Django, FastAPI). Участие в разработке архитектуры системы. Декомпозиция и оценка...",
+    "schedule": "Полный день",
+    "url": "https://hh.ru/vacancy/130280230"
+  },
+  {
+    "name": "Junior Python разработчик",
+    "area": "Москва",
+    "salary_from": 70000,
+    "salary_to": 110000,
+    "requirement": "Был уверенным пользователем Python 3. Имел опыт работы с веб-фреймворками: FastAPI или Django/Flask. Опыт работы с системами контроля...",
+    "responsibility": "Участвовать в разработке веб-приложений и сервисов на Python. Работать с REST API: проектировать, реализовывать и тестировать их. ",
+    "schedule": "Удаленная работа",
+    "url": "https://hh.ru/vacancy/130511955"
+  },
+  {
+    "name": "Junior Web-разработчик / Fullstack-разработчик",
+    "area": "Москва",
+    "salary_from": 70000,
+    "salary_to": 100000,
+    "requirement": "Опыт сборки проектов с использованием AI-инструментов (Cursor, Claude Code). Знание Python-фреймворков (Django, FastAPI). Знание фронтенд-фреймворков. ",
+    "responsibility": "Продолжение разработки и поддержка существующих пилотных проектов (работа с чужой кодовой базой и документацией). Разработка новых пилотных проектов с искусственным...",
+    "schedule": "Полный день",
+    "url": "https://hh.ru/vacancy/130540403"
+  }
+]
