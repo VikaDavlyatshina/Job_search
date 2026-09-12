@@ -4,6 +4,11 @@ from typing import Any, Dict, List, Optional, Union
 
 import requests  # Библиотека для HTTP-запросов к API
 
+from config import setup_api_logger
+
+# Создаём logger
+logger = setup_api_logger()
+
 
 class BaseVacancyApi(ABC):
     """
@@ -74,10 +79,10 @@ class HeadHunterAPI(BaseVacancyApi):
 
                     response = self.__session.get(self.__base_url, params=params, timeout=10)
                     response.raise_for_status()
-                    print("✅ Соединение с hh.ru установлено")
+                    logger.info("✅ Соединение с hh.ru установлено")
 
             except Exception as e:
-                print(f"Внимание: {e}")
+                logger.error(f"Внимание: {e}")
 
     def _find_city_id(self, city_name: str) -> Optional[int]:
         """
@@ -116,7 +121,7 @@ class HeadHunterAPI(BaseVacancyApi):
 
         except Exception as e:
             # Если ошибка (нет интернета, API не отвечает и т.д.)
-            print(f"Ошибка при поиске города '{city_name}': {e}")
+            logger.warning(f"Ошибка при поиске города '{city_name}': {e}")
 
         return None
 
@@ -166,7 +171,7 @@ class HeadHunterAPI(BaseVacancyApi):
         if self.__session is None:
             self._connect()
             if self.__session is None:
-                print("Не удалось установить соединение с API")
+                logger.error("Не удалось установить соединение с API")
                 return []
 
         # 3. Определяем, где ищем (город или вся Россия)
@@ -180,19 +185,19 @@ class HeadHunterAPI(BaseVacancyApi):
             if found_id:
                 # Город найден, используем его ID
                 area_id = found_id
-                print(f"Ищем вакансию в городе: {city} ")
+                logger.debug(f"Ищем вакансию в городе: {city} ")
             else:
                 # Город не найден, ищем по всей России
-                print(f"Город '{city}' не найден. Ищем по всей России")
+                logger.debug(f"Город '{city}' не найден. Ищем по всей России")
 
         else:
             # Город не указан - ищем по России
-            print("Ищем вакансии по всей России")
+            logger.debug("Ищем вакансии по всей России")
 
         # 4. Постраничный поиск
 
         # Здесь будем накапливать все найденные вакансии
-        all_vacancies = []
+        all_vacancies: List[Dict[str, Any]] = []
 
         for page in range(max_pages):
             """
@@ -204,7 +209,7 @@ class HeadHunterAPI(BaseVacancyApi):
 
             try:
                 if self.__session is None:
-                    print(f"Сессия потеряна на странице {page + 1}")
+                    logger.warning(f"Сессия потеряна на странице {page + 1}")
                     break
                 # Параметры запроса для текущей страницы
                 params: Dict[str, Union[str, int, bool, None]] = {
@@ -248,10 +253,136 @@ class HeadHunterAPI(BaseVacancyApi):
                 if page < max_pages - 1:
                     time.sleep(0.1)
             except requests.RequestException as e:
-                print(f"Ошибка при загрузке страницы {page + 1}: {e}")
+                logger.warning(f"Ошибка при загрузке страницы {page + 1}: {e}")
                 continue
             except Exception as e:
-                print(f"Неожиданная ошибка при загрузке страницы {page + 1}: {e}")
+                logger.error(f"Неожиданная ошибка при загрузке страницы {page + 1}: {e}")
                 continue
 
         return all_vacancies
+
+    def get_employer_info(self, employer_id: str) -> Dict[str, Any]:
+        """
+        Получает подробную информацию о компании/работодателе
+        :param employer_id:
+                ID компании на hh.ru
+        :return:
+               Словарь с данными компании или пустой словарь при ошибке
+        """
+
+        # Проверяем сессию
+        if self.__session is None:
+            self._connect()
+            if self.__session is None:
+                logger.error("Не удалось установить соединение с API")
+                return {}
+
+        try:
+            url = f"https://api.hh.ru/employers/{employer_id}"
+            response = self.__session.get(url, timeout=10)
+            response.raise_for_status()
+
+            # Получаем данные и явно приводим к нужному типу
+            employer_data = response.json()
+
+            # Проверяем, что это действительно словарь
+            if not isinstance(employer_data, dict):
+                logger.warning(f"Получен неверный формат данных для компании {employer_id}")
+                return {}
+
+            # Проверяем обязательные поля
+            required_fields = ["id", "name"]
+            for field in required_fields:
+                if field not in employer_data:
+                    logger.warning(f"У компании {employer_id} нет поля {field}")
+                    return {}
+
+            return employer_data
+
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                logger.warning(f"Компания с ID {employer_id} не найдена")
+            else:
+                logger.error(f"HTTP ошибка при получении компании {employer_id}: {e}")
+            return {}
+        except Exception as e:
+            logger.error(f"Неожиданная ошибка при получении компании {employer_id}: {e}")
+            return {}
+
+    def get_vacancies_by_employer(
+        self, employer_id: str, limit: int = 50, only_with_salary: bool = False
+    ) -> List[Dict[str, Any]]:
+        """
+        Получает вакансии конкретной компании
+        :param employer_id: ID компании на hh.ru
+        :param limit: Максимальное количество вакансий для сбора
+        :param only_with_salary:  Только вакансии с указанной зарплатой
+        :return: Список вакансий компании
+        """
+
+        # Проверяем сессию
+        if self.__session is None:
+            self._connect()
+            if self.__session is None:
+                logger.error("Не удалось установить соединение с API")
+                return []
+
+        # Валидации параметров
+        if not employer_id or not isinstance(employer_id, str):
+            return []
+
+        if limit <= 0:
+            return []
+
+        # Ограничиваем limit (чтобы не делать слишком много запросов)
+        limit = min(limit, 200)  # Максимум 200 вакансий
+
+        all_vacancies: List[Dict[str, Any]] = []
+        page = 0
+
+        try:
+            # Получаем вакансии постранично, пока не наберем limit
+            while len(all_vacancies) < limit:
+                params: Dict[str, Any] = {
+                    "employer_id": employer_id,
+                    "page": page,
+                    "per_page": min(100, limit - len(all_vacancies)),  # API позволяет до 100 на страницу
+                    "only_with_salary": only_with_salary,
+                    "area": "113",  # Россия
+                }
+
+                response = self.__session.get(self.__base_url, params=params, timeout=15)
+                response.raise_for_status()
+
+                data = response.json()
+                page_vacancies = data.get("items", [])
+
+                # Если страница пустая - выходим
+                if not page_vacancies:
+                    break
+
+                # Добавляем вакансии
+                all_vacancies.extend(page_vacancies)
+
+                # Проверяем, есть ли еще страницы
+                pages = data.get("pages", 0)
+                if page >= pages - 1:  # Если это последняя страница
+                    break
+
+                page += 1
+
+                # Делаем паузу между запросами (чтобы не заблокировали)
+                if len(all_vacancies) < limit:
+                    time.sleep(0.1)
+
+            # Возвращаем только нужное количество
+            result = all_vacancies[:limit]
+            logger.info(f"Получено {len(result)} вакансий для компании {employer_id}")
+            return result
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Ошибка при получении вакансий компании {employer_id}: {e}")
+            return []
+        except Exception as e:
+            logger.error(f"Неожиданная ошибка при получении вакансий компании {employer_id}: {e}")
+            return []

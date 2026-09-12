@@ -1,7 +1,16 @@
 from typing import List
+
 import pytest
-from src.utils import (filter_vacancies, filter_vacancies_by_profession, format_salary, get_top_vacancies,
-                       get_vacancies_by_salary, print_vacancies, sort_vacancies_by_salary)
+
+from src.utils import (
+    filter_vacancies,
+    filter_vacancies_by_profession,
+    format_salary,
+    get_top_vacancies,
+    get_vacancies_by_salary,
+    print_vacancies,
+    sort_vacancies_by_salary,
+)
 from src.vacancy import Vacancy
 
 

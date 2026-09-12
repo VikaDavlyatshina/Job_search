@@ -1,5 +1,7 @@
 from typing import Any, Callable, Dict, Tuple
+
 import pytest
+
 from src.vacancy import Vacancy
 
 

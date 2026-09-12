@@ -1,5 +1,6 @@
 import re
 from typing import List
+
 from src.vacancy import Vacancy
 
 
